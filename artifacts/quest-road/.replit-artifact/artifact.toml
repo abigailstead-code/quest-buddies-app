@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Quest Road"
+description = "A warm cooperative adventure game where two friends share a journey, complete personal quests, and encourage each other through weekly levels."
+version = "1.0.0"
+id = "artifacts/quest-road"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20223
+
+[services.development]
+run = "pnpm --filter @workspace/quest-road run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/quest-road", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/quest-road/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20223"
+BASE_PATH = "/"

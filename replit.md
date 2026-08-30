@@ -1,15 +1,16 @@
-# [Project name]
+# Quest Road
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Quest Road is a warm two-player adventure game where friends share a room, complete personal quests, and encourage each other.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/quest-road run dev` — run the responsive web app
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- The web workflow provides `PORT` and `BASE_PATH`; do not start Vite directly without them.
 
 ## Stack
 
@@ -22,23 +23,34 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/quest-road/src/App.tsx` — responsive game UI, room entry, navigation, and game interactions
+- `artifacts/quest-road/src/index.css` — Quest Road visual tokens and responsive styling
+- `artifacts/api-server/src/routes/quest-road.ts` — room and shared game API
+- `lib/api-spec/openapi.yaml` — API contract and generated client source
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Shared room state is served by the API rather than stored in the browser; the browser only remembers the current room/player convenience ids.
+- Rooms are capped at two players in the API, with a short invite code and a shareable `/room/:roomId` link.
+- Player ownership is included in mutation inputs and enforced by the API so one friend cannot edit the other's quests.
+- Shared state uses polling so a second browser sees quest, reward, and encouragement changes without a manual refresh.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Create a room and invite one friend by link or code.
+- See a waiting room until the second player joins.
+- Add, edit, complete, reopen, and delete personal quests.
+- View a shared journey map, month calendar, reward shop, coin trail, together view, and settings.
+- Earn coins from completed quests, redeem shared rewards, and send encouragements.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+No project-specific preferences recorded.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- The current API room store is process-local; restarting the API clears active rooms.
+- Regenerate API client and validator files after changing `lib/api-spec/openapi.yaml`.
 
 ## Pointers
 

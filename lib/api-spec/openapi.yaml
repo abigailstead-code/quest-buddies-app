@@ -3,13 +3,17 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Quest Road multiplayer API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: rooms
+    description: Shared multiplayer rooms
+  - name: game
+    description: Shared Quest Road game state
 paths:
   /healthz:
     get:
@@ -24,7 +28,240 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /rooms:
+    post:
+      operationId: createRoom
+      tags: [rooms]
+      summary: Create a multiplayer room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoomInput"
+      responses:
+        "201":
+          description: Created room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+  /rooms/{roomId}:
+    get:
+      operationId: getRoom
+      tags: [rooms]
+      summary: Get a room by id
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      responses:
+        "200":
+          description: Room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+        "404":
+          description: Room not found
+  /rooms/{roomId}/join:
+    post:
+      operationId: joinRoom
+      tags: [rooms]
+      summary: Join a waiting room with its invite code
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRoomInput"
+      responses:
+        "200":
+          description: Joined room
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Room"
+        "400":
+          description: Room is full or invite code is incorrect
+  /rooms/{roomId}/state:
+    get:
+      operationId: getGameState
+      tags: [game]
+      summary: Get the shared game state
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      responses:
+        "200":
+          description: Shared game state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GameState"
+        "404":
+          description: Room not found
+  /rooms/{roomId}/quests:
+    post:
+      operationId: createQuest
+      tags: [game]
+      summary: Add a personal quest to a room
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuestInput"
+      responses:
+        "201":
+          description: Created quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quest"
+  /rooms/{roomId}/quests/{questId}:
+    patch:
+      operationId: updateQuest
+      tags: [game]
+      summary: Edit a personal quest
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/QuestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuestInput"
+      responses:
+        "200":
+          description: Updated quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quest"
+    delete:
+      operationId: deleteQuest
+      tags: [game]
+      summary: Delete a personal quest
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/QuestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteQuestInput"
+      responses:
+        "204":
+          description: Quest deleted
+  /rooms/{roomId}/quests/{questId}/complete:
+    post:
+      operationId: setQuestCompleted
+      tags: [game]
+      summary: Complete or reopen a personal quest
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/QuestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteQuestInput"
+      responses:
+        "200":
+          description: Updated quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quest"
+  /rooms/{roomId}/encouragements:
+    post:
+      operationId: createEncouragement
+      tags: [game]
+      summary: Send a message to the other player
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEncouragementInput"
+      responses:
+        "201":
+          description: Created encouragement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Encouragement"
+  /rooms/{roomId}/rewards:
+    post:
+      operationId: createReward
+      tags: [game]
+      summary: Create a shared reward
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRewardInput"
+      responses:
+        "201":
+          description: Created reward
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reward"
+  /rooms/{roomId}/rewards/{rewardId}/redeem:
+    post:
+      operationId: redeemReward
+      tags: [game]
+      summary: Redeem a reward with earned coins
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/RewardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RedeemRewardInput"
+      responses:
+        "201":
+          description: Created redemption
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardRedemption"
+        "400":
+          description: Insufficient balance or unavailable reward
 components:
+  parameters:
+    RoomId:
+      name: roomId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 4
+    QuestId:
+      name: questId
+      in: path
+      required: true
+      schema:
+        type: string
+    RewardId:
+      name: rewardId
+      in: path
+      required: true
+      schema:
+        type: string
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +270,183 @@ components:
           type: string
       required:
         - status
+    Player:
+      type: object
+      required: [id, name, avatar, coins, xp, streak]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        avatar: { type: string }
+        coins: { type: number }
+        xp: { type: number }
+        streak: { type: number }
+    Room:
+      type: object
+      required: [id, code, name, status, host, guest, createdAt]
+      properties:
+        id: { type: string }
+        code: { type: string }
+        name: { type: string }
+        status:
+          type: string
+          enum: [waiting, playing]
+        host:
+          $ref: "#/components/schemas/Player"
+        guest:
+          type: ["object", "null"]
+          allOf:
+            - $ref: "#/components/schemas/Player"
+        createdAt: { type: string }
+    Quest:
+      type: object
+      required: [id, ownerId, title, notes, dueDate, priority, status, coinValue, xpValue, createdAt]
+      properties:
+        id: { type: string }
+        ownerId: { type: string }
+        title: { type: string }
+        notes: { type: ["string", "null"] }
+        dueDate: { type: string }
+        priority:
+          type: string
+          enum: [small, medium, major]
+        status:
+          type: string
+          enum: [planned, completed]
+        coinValue: { type: number }
+        xpValue: { type: number }
+        completedAt: { type: ["string", "null"] }
+        createdAt: { type: string }
+    Reward:
+      type: object
+      required: [id, title, description, emoji, cost, createdBy, active, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        emoji: { type: string }
+        cost: { type: number }
+        createdBy: { type: string }
+        active: { type: boolean }
+        createdAt: { type: string }
+    Encouragement:
+      type: object
+      required: [id, fromId, toId, message, createdAt]
+      properties:
+        id: { type: string }
+        fromId: { type: string }
+        toId: { type: string }
+        message: { type: string }
+        createdAt: { type: string }
+    Transaction:
+      type: object
+      required: [id, playerId, amount, kind, label, createdAt]
+      properties:
+        id: { type: string }
+        playerId: { type: string }
+        amount: { type: number }
+        kind:
+          type: string
+          enum: [quest, reward, bonus]
+        label: { type: string }
+        createdAt: { type: string }
+    RewardRedemption:
+      type: object
+      required: [id, rewardId, playerId, cost, redeemedAt]
+      properties:
+        id: { type: string }
+        rewardId: { type: string }
+        playerId: { type: string }
+        cost: { type: number }
+        redeemedAt: { type: string }
+    GameState:
+      type: object
+      required: [room, players, quests, rewards, encouragements, transactions, redemptions, currentLevel, weekLabel, daysRemaining]
+      properties:
+        room: { $ref: "#/components/schemas/Room" }
+        players:
+          type: array
+          items: { $ref: "#/components/schemas/Player" }
+        quests:
+          type: array
+          items: { $ref: "#/components/schemas/Quest" }
+        rewards:
+          type: array
+          items: { $ref: "#/components/schemas/Reward" }
+        encouragements:
+          type: array
+          items: { $ref: "#/components/schemas/Encouragement" }
+        transactions:
+          type: array
+          items: { $ref: "#/components/schemas/Transaction" }
+        redemptions:
+          type: array
+          items: { $ref: "#/components/schemas/RewardRedemption" }
+        currentLevel: { type: number }
+        weekLabel: { type: string }
+        daysRemaining: { type: number }
+    CreateRoomInput:
+      type: object
+      required: [name, playerName]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        playerName: { type: string, minLength: 1, maxLength: 40 }
+    JoinRoomInput:
+      type: object
+      required: [code, playerName]
+      properties:
+        code: { type: string, minLength: 4, maxLength: 12 }
+        playerName: { type: string, minLength: 1, maxLength: 40 }
+    CreateQuestInput:
+      type: object
+      required: [ownerId, title, dueDate, priority]
+      properties:
+        ownerId: { type: string }
+        title: { type: string, minLength: 1, maxLength: 180 }
+        notes: { type: string, maxLength: 500 }
+        dueDate: { type: string, format: date }
+        priority:
+          type: string
+          enum: [small, medium, major]
+    UpdateQuestInput:
+      type: object
+      properties:
+        ownerId: { type: string }
+        title: { type: string, minLength: 1, maxLength: 180 }
+        notes: { type: string, maxLength: 500 }
+        dueDate: { type: string, format: date }
+        priority:
+          type: string
+          enum: [small, medium, major]
+    DeleteQuestInput:
+      type: object
+      required: [ownerId]
+      properties:
+        ownerId: { type: string }
+    CompleteQuestInput:
+      type: object
+      required: [ownerId, completed]
+      properties:
+        ownerId: { type: string }
+        completed: { type: boolean }
+    CreateEncouragementInput:
+      type: object
+      required: [fromId, toId, message]
+      properties:
+        fromId: { type: string }
+        toId: { type: string }
+        message: { type: string, minLength: 1, maxLength: 300 }
+    CreateRewardInput:
+      type: object
+      required: [createdBy, title, cost]
+      properties:
+        createdBy: { type: string }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        emoji: { type: string, maxLength: 4 }
+        cost: { type: number, minimum: 1 }
+    RedeemRewardInput:
+      type: object
+      required: [playerId]
+      properties:
+        playerId: { type: string }
 
