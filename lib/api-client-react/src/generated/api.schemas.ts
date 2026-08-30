@@ -60,7 +60,10 @@ export interface Quest {
   title: string;
   /** @nullable */
   notes: string | null;
-  dueDate: string;
+  /** @nullable */
+  dueDate: string | null;
+  /** @nullable */
+  labelId?: string | null;
   priority: QuestPriority;
   status: QuestStatus;
   coinValue: number;
@@ -80,6 +83,37 @@ export interface Reward {
   createdBy: string;
   active: boolean;
   createdAt: string;
+}
+
+export interface Label {
+  id: string;
+  ownerId: string;
+  name: string;
+  color: string;
+  createdAt: string;
+}
+
+export type RewardRequestStatus = typeof RewardRequestStatus[keyof typeof RewardRequestStatus];
+
+
+export const RewardRequestStatus = {
+  awaiting_response: 'awaiting_response',
+  countered: 'countered',
+  accepted: 'accepted',
+  declined: 'declined',
+} as const;
+
+export interface RewardRequest {
+  id: string;
+  requesterId: string;
+  responderId: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  offer: number;
+  status: RewardRequestStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Encouragement {
@@ -124,6 +158,8 @@ export interface GameState {
   encouragements: Encouragement[];
   transactions: Transaction[];
   redemptions: RewardRedemption[];
+  labels: Label[];
+  rewardRequests: RewardRequest[];
   currentLevel: number;
   weekLabel: string;
   daysRemaining: number;
@@ -173,7 +209,10 @@ export interface CreateQuestInput {
   title: string;
   /** @maxLength 500 */
   notes?: string;
-  dueDate: string;
+  /** @nullable */
+  dueDate: string | null;
+  /** @nullable */
+  labelId?: string | null;
   priority: CreateQuestInputPriority;
 }
 
@@ -195,7 +234,10 @@ export interface UpdateQuestInput {
   title?: string;
   /** @maxLength 500 */
   notes?: string;
-  dueDate?: string;
+  /** @nullable */
+  dueDate?: string | null;
+  /** @nullable */
+  labelId?: string | null;
   priority?: UpdateQuestInputPriority;
 }
 
@@ -235,5 +277,89 @@ export interface CreateRewardInput {
 
 export interface RedeemRewardInput {
   playerId: string;
+}
+
+export interface CreateLabelInput {
+  ownerId: string;
+  /**
+     * @minLength 1
+     * @maxLength 40
+     */
+  name: string;
+  /**
+     * @minLength 4
+     * @maxLength 24
+     */
+  color: string;
+}
+
+export interface UpdateLabelInput {
+  ownerId: string;
+  /**
+     * @minLength 1
+     * @maxLength 40
+     */
+  name?: string;
+  /**
+     * @minLength 4
+     * @maxLength 24
+     */
+  color?: string;
+}
+
+export interface DeleteLabelInput {
+  ownerId: string;
+}
+
+export interface UpdateRewardInput {
+  actorId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  title?: string;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  description?: string | null;
+  /** @minimum 1 */
+  cost?: number;
+}
+
+export interface DeleteRewardInput {
+  actorId: string;
+}
+
+export interface CreateRewardRequestInput {
+  requesterId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  title: string;
+  /**
+     * @maxLength 300
+     * @nullable
+     */
+  description?: string | null;
+  /** @minimum 1 */
+  offer: number;
+}
+
+export type RespondRewardRequestInputAction = typeof RespondRewardRequestInputAction[keyof typeof RespondRewardRequestInputAction];
+
+
+export const RespondRewardRequestInputAction = {
+  accept: 'accept',
+  counter: 'counter',
+  decline: 'decline',
+} as const;
+
+export interface RespondRewardRequestInput {
+  actorId: string;
+  action: RespondRewardRequestInputAction;
+  /** @minimum 1 */
+  offer?: number;
 }
 

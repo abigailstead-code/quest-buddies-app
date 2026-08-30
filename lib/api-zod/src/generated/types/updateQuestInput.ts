@@ -16,6 +16,9 @@ export interface UpdateQuestInput {
   title?: string;
   /** @maxLength 500 */
   notes?: string;
-  dueDate?: Date;
+  /** @nullable */
+  dueDate?: Date | null;
+  /** @nullable */
+  labelId?: string | null;
   priority?: UpdateQuestInputPriority;
 }

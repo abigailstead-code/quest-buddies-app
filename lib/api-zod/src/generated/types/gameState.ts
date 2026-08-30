@@ -6,10 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Encouragement } from './encouragement';
+import type { Label } from './label';
 import type { Player } from './player';
 import type { Quest } from './quest';
 import type { Reward } from './reward';
 import type { RewardRedemption } from './rewardRedemption';
+import type { RewardRequest } from './rewardRequest';
 import type { Room } from './room';
 import type { Transaction } from './transaction';
 
@@ -21,6 +23,8 @@ export interface GameState {
   encouragements: Encouragement[];
   transactions: Transaction[];
   redemptions: RewardRedemption[];
+  labels: Label[];
+  rewardRequests: RewardRequest[];
   currentLevel: number;
   weekLabel: string;
   daysRemaining: number;

@@ -14,7 +14,10 @@ export interface Quest {
   title: string;
   /** @nullable */
   notes: string | null;
-  dueDate: string;
+  /** @nullable */
+  dueDate: string | null;
+  /** @nullable */
+  labelId?: string | null;
   priority: QuestPriority;
   status: QuestStatus;
   coinValue: number;

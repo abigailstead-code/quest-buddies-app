@@ -22,20 +22,29 @@ import type {
 import type {
   CompleteQuestInput,
   CreateEncouragementInput,
+  CreateLabelInput,
   CreateQuestInput,
   CreateRewardInput,
+  CreateRewardRequestInput,
   CreateRoomInput,
+  DeleteLabelInput,
   DeleteQuestInput,
+  DeleteRewardInput,
   Encouragement,
   GameState,
   HealthStatus,
   JoinRoomInput,
+  Label,
   Quest,
   RedeemRewardInput,
+  RespondRewardRequestInput,
   Reward,
   RewardRedemption,
+  RewardRequest,
   Room,
-  UpdateQuestInput
+  UpdateLabelInput,
+  UpdateQuestInput,
+  UpdateRewardInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -950,5 +959,519 @@ export const useRedeemReward = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getRedeemRewardMutationOptions(options));
+    }
+
+export const getUpdateRewardUrl = (roomId: string,
+    rewardId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/rewards/${rewardId}`
+}
+
+/**
+ * @summary Edit a shared reward
+ */
+export const updateReward = async (roomId: string,
+    rewardId: string,
+    updateRewardInput: UpdateRewardInput, options?: Parameters<typeof customFetch>[1]): Promise<Reward> => {
+
+  return customFetch<Reward>(getUpdateRewardUrl(roomId,rewardId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateRewardInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateRewardMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReward>>, TError,{roomId: string;rewardId: string;data: BodyType<UpdateRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateReward>>, TError,{roomId: string;rewardId: string;data: BodyType<UpdateRewardInput>}, TContext> => {
+
+const mutationKey = ['updateReward'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateReward>>, {roomId: string;rewardId: string;data: BodyType<UpdateRewardInput>}> = (props) => {
+          const {roomId,rewardId,data} = props ?? {};
+
+          return  updateReward(roomId,rewardId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateRewardMutationResult = NonNullable<Awaited<ReturnType<typeof updateReward>>>
+    export type UpdateRewardMutationBody = BodyType<UpdateRewardInput>
+    export type UpdateRewardMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Edit a shared reward
+ */
+export const useUpdateReward = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateReward>>, TError,{roomId: string;rewardId: string;data: BodyType<UpdateRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateReward>>,
+        TError,
+        {roomId: string;rewardId: string;data: BodyType<UpdateRewardInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateRewardMutationOptions(options));
+    }
+
+export const getDeleteRewardUrl = (roomId: string,
+    rewardId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/rewards/${rewardId}`
+}
+
+/**
+ * @summary Delete a shared reward
+ */
+export const deleteReward = async (roomId: string,
+    rewardId: string,
+    deleteRewardInput: DeleteRewardInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteRewardUrl(roomId,rewardId),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(deleteRewardInput)
+  }
+);}
+
+
+
+
+
+export const getDeleteRewardMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReward>>, TError,{roomId: string;rewardId: string;data: BodyType<DeleteRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReward>>, TError,{roomId: string;rewardId: string;data: BodyType<DeleteRewardInput>}, TContext> => {
+
+const mutationKey = ['deleteReward'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReward>>, {roomId: string;rewardId: string;data: BodyType<DeleteRewardInput>}> = (props) => {
+          const {roomId,rewardId,data} = props ?? {};
+
+          return  deleteReward(roomId,rewardId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteRewardMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReward>>>
+    export type DeleteRewardMutationBody = BodyType<DeleteRewardInput>
+    export type DeleteRewardMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a shared reward
+ */
+export const useDeleteReward = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReward>>, TError,{roomId: string;rewardId: string;data: BodyType<DeleteRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteReward>>,
+        TError,
+        {roomId: string;rewardId: string;data: BodyType<DeleteRewardInput>},
+        TContext
+      > => {
+      return useMutation(getDeleteRewardMutationOptions(options));
+    }
+
+export const getCreateLabelUrl = (roomId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/labels`
+}
+
+/**
+ * @summary Create a personal quest label
+ */
+export const createLabel = async (roomId: string,
+    createLabelInput: CreateLabelInput, options?: Parameters<typeof customFetch>[1]): Promise<Label> => {
+
+  return customFetch<Label>(getCreateLabelUrl(roomId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createLabelInput)
+  }
+);}
+
+
+
+
+
+export const getCreateLabelMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLabel>>, TError,{roomId: string;data: BodyType<CreateLabelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createLabel>>, TError,{roomId: string;data: BodyType<CreateLabelInput>}, TContext> => {
+
+const mutationKey = ['createLabel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createLabel>>, {roomId: string;data: BodyType<CreateLabelInput>}> = (props) => {
+          const {roomId,data} = props ?? {};
+
+          return  createLabel(roomId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateLabelMutationResult = NonNullable<Awaited<ReturnType<typeof createLabel>>>
+    export type CreateLabelMutationBody = BodyType<CreateLabelInput>
+    export type CreateLabelMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a personal quest label
+ */
+export const useCreateLabel = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createLabel>>, TError,{roomId: string;data: BodyType<CreateLabelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createLabel>>,
+        TError,
+        {roomId: string;data: BodyType<CreateLabelInput>},
+        TContext
+      > => {
+      return useMutation(getCreateLabelMutationOptions(options));
+    }
+
+export const getUpdateLabelUrl = (roomId: string,
+    labelId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/labels/${labelId}`
+}
+
+/**
+ * @summary Rename or recolour a personal quest label
+ */
+export const updateLabel = async (roomId: string,
+    labelId: string,
+    updateLabelInput: UpdateLabelInput, options?: Parameters<typeof customFetch>[1]): Promise<Label> => {
+
+  return customFetch<Label>(getUpdateLabelUrl(roomId,labelId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateLabelInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateLabelMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLabel>>, TError,{roomId: string;labelId: string;data: BodyType<UpdateLabelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateLabel>>, TError,{roomId: string;labelId: string;data: BodyType<UpdateLabelInput>}, TContext> => {
+
+const mutationKey = ['updateLabel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLabel>>, {roomId: string;labelId: string;data: BodyType<UpdateLabelInput>}> = (props) => {
+          const {roomId,labelId,data} = props ?? {};
+
+          return  updateLabel(roomId,labelId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateLabelMutationResult = NonNullable<Awaited<ReturnType<typeof updateLabel>>>
+    export type UpdateLabelMutationBody = BodyType<UpdateLabelInput>
+    export type UpdateLabelMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Rename or recolour a personal quest label
+ */
+export const useUpdateLabel = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLabel>>, TError,{roomId: string;labelId: string;data: BodyType<UpdateLabelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateLabel>>,
+        TError,
+        {roomId: string;labelId: string;data: BodyType<UpdateLabelInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateLabelMutationOptions(options));
+    }
+
+export const getDeleteLabelUrl = (roomId: string,
+    labelId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/labels/${labelId}`
+}
+
+/**
+ * @summary Delete a personal quest label
+ */
+export const deleteLabel = async (roomId: string,
+    labelId: string,
+    deleteLabelInput: DeleteLabelInput, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteLabelUrl(roomId,labelId),
+  {
+    ...options,
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(deleteLabelInput)
+  }
+);}
+
+
+
+
+
+export const getDeleteLabelMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLabel>>, TError,{roomId: string;labelId: string;data: BodyType<DeleteLabelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLabel>>, TError,{roomId: string;labelId: string;data: BodyType<DeleteLabelInput>}, TContext> => {
+
+const mutationKey = ['deleteLabel'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLabel>>, {roomId: string;labelId: string;data: BodyType<DeleteLabelInput>}> = (props) => {
+          const {roomId,labelId,data} = props ?? {};
+
+          return  deleteLabel(roomId,labelId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLabelMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLabel>>>
+    export type DeleteLabelMutationBody = BodyType<DeleteLabelInput>
+    export type DeleteLabelMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a personal quest label
+ */
+export const useDeleteLabel = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLabel>>, TError,{roomId: string;labelId: string;data: BodyType<DeleteLabelInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLabel>>,
+        TError,
+        {roomId: string;labelId: string;data: BodyType<DeleteLabelInput>},
+        TContext
+      > => {
+      return useMutation(getDeleteLabelMutationOptions(options));
+    }
+
+export const getCreateRewardRequestUrl = (roomId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/reward-requests`
+}
+
+/**
+ * @summary Request a negotiated reward
+ */
+export const createRewardRequest = async (roomId: string,
+    createRewardRequestInput: CreateRewardRequestInput, options?: Parameters<typeof customFetch>[1]): Promise<RewardRequest> => {
+
+  return customFetch<RewardRequest>(getCreateRewardRequestUrl(roomId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(createRewardRequestInput)
+  }
+);}
+
+
+
+
+
+export const getCreateRewardRequestMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRewardRequest>>, TError,{roomId: string;data: BodyType<CreateRewardRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createRewardRequest>>, TError,{roomId: string;data: BodyType<CreateRewardRequestInput>}, TContext> => {
+
+const mutationKey = ['createRewardRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createRewardRequest>>, {roomId: string;data: BodyType<CreateRewardRequestInput>}> = (props) => {
+          const {roomId,data} = props ?? {};
+
+          return  createRewardRequest(roomId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateRewardRequestMutationResult = NonNullable<Awaited<ReturnType<typeof createRewardRequest>>>
+    export type CreateRewardRequestMutationBody = BodyType<CreateRewardRequestInput>
+    export type CreateRewardRequestMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Request a negotiated reward
+ */
+export const useCreateRewardRequest = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createRewardRequest>>, TError,{roomId: string;data: BodyType<CreateRewardRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createRewardRequest>>,
+        TError,
+        {roomId: string;data: BodyType<CreateRewardRequestInput>},
+        TContext
+      > => {
+      return useMutation(getCreateRewardRequestMutationOptions(options));
+    }
+
+export const getRespondToRewardRequestUrl = (roomId: string,
+    requestId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/reward-requests/${requestId}/respond`
+}
+
+/**
+ * @summary Respond to a negotiated reward request
+ */
+export const respondToRewardRequest = async (roomId: string,
+    requestId: string,
+    respondRewardRequestInput: RespondRewardRequestInput, options?: Parameters<typeof customFetch>[1]): Promise<RewardRequest> => {
+
+  return customFetch<RewardRequest>(getRespondToRewardRequestUrl(roomId,requestId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(respondRewardRequestInput)
+  }
+);}
+
+
+
+
+
+export const getRespondToRewardRequestMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToRewardRequest>>, TError,{roomId: string;requestId: string;data: BodyType<RespondRewardRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof respondToRewardRequest>>, TError,{roomId: string;requestId: string;data: BodyType<RespondRewardRequestInput>}, TContext> => {
+
+const mutationKey = ['respondToRewardRequest'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof respondToRewardRequest>>, {roomId: string;requestId: string;data: BodyType<RespondRewardRequestInput>}> = (props) => {
+          const {roomId,requestId,data} = props ?? {};
+
+          return  respondToRewardRequest(roomId,requestId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RespondToRewardRequestMutationResult = NonNullable<Awaited<ReturnType<typeof respondToRewardRequest>>>
+    export type RespondToRewardRequestMutationBody = BodyType<RespondRewardRequestInput>
+    export type RespondToRewardRequestMutationError = ErrorType<void>
+
+    /**
+ * @summary Respond to a negotiated reward request
+ */
+export const useRespondToRewardRequest = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof respondToRewardRequest>>, TError,{roomId: string;requestId: string;data: BodyType<RespondRewardRequestInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof respondToRewardRequest>>,
+        TError,
+        {roomId: string;requestId: string;data: BodyType<RespondRewardRequestInput>},
+        TContext
+      > => {
+      return useMutation(getRespondToRewardRequestMutationOptions(options));
     }
 

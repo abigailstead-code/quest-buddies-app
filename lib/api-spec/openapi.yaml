@@ -241,6 +241,143 @@ paths:
                 $ref: "#/components/schemas/RewardRedemption"
         "400":
           description: Insufficient balance or unavailable reward
+  /rooms/{roomId}/rewards/{rewardId}:
+    patch:
+      operationId: updateReward
+      tags: [game]
+      summary: Edit a shared reward
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/RewardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRewardInput"
+      responses:
+        "200":
+          description: Updated reward
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reward"
+    delete:
+      operationId: deleteReward
+      tags: [game]
+      summary: Delete a shared reward
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/RewardId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteRewardInput"
+      responses:
+        "204":
+          description: Reward deleted
+  /rooms/{roomId}/labels:
+    post:
+      operationId: createLabel
+      tags: [game]
+      summary: Create a personal quest label
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLabelInput"
+      responses:
+        "201":
+          description: Created label
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Label"
+  /rooms/{roomId}/labels/{labelId}:
+    patch:
+      operationId: updateLabel
+      tags: [game]
+      summary: Rename or recolour a personal quest label
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/LabelId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLabelInput"
+      responses:
+        "200":
+          description: Updated label
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Label"
+    delete:
+      operationId: deleteLabel
+      tags: [game]
+      summary: Delete a personal quest label
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/LabelId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteLabelInput"
+      responses:
+        "204":
+          description: Label deleted
+  /rooms/{roomId}/reward-requests:
+    post:
+      operationId: createRewardRequest
+      tags: [game]
+      summary: Request a negotiated reward
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRewardRequestInput"
+      responses:
+        "201":
+          description: Created reward request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardRequest"
+  /rooms/{roomId}/reward-requests/{requestId}/respond:
+    post:
+      operationId: respondToRewardRequest
+      tags: [game]
+      summary: Respond to a negotiated reward request
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/RequestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RespondRewardRequestInput"
+      responses:
+        "200":
+          description: Updated reward request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardRequest"
+        "400":
+          description: Invalid negotiation action or insufficient balance
 components:
   parameters:
     RoomId:
@@ -258,6 +395,18 @@ components:
         type: string
     RewardId:
       name: rewardId
+      in: path
+      required: true
+      schema:
+        type: string
+    LabelId:
+      name: labelId
+      in: path
+      required: true
+      schema:
+        type: string
+    RequestId:
+      name: requestId
       in: path
       required: true
       schema:
@@ -305,7 +454,8 @@ components:
         ownerId: { type: string }
         title: { type: string }
         notes: { type: ["string", "null"] }
-        dueDate: { type: string }
+        dueDate: { type: ["string", "null"] }
+        labelId: { type: ["string", "null"] }
         priority:
           type: string
           enum: [small, medium, major]
@@ -328,6 +478,30 @@ components:
         createdBy: { type: string }
         active: { type: boolean }
         createdAt: { type: string }
+    Label:
+      type: object
+      required: [id, ownerId, name, color, createdAt]
+      properties:
+        id: { type: string }
+        ownerId: { type: string }
+        name: { type: string }
+        color: { type: string }
+        createdAt: { type: string }
+    RewardRequest:
+      type: object
+      required: [id, requesterId, responderId, title, description, offer, status, createdAt, updatedAt]
+      properties:
+        id: { type: string }
+        requesterId: { type: string }
+        responderId: { type: string }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        offer: { type: number }
+        status:
+          type: string
+          enum: [awaiting_response, countered, accepted, declined]
+        createdAt: { type: string }
+        updatedAt: { type: string }
     Encouragement:
       type: object
       required: [id, fromId, toId, message, createdAt]
@@ -360,7 +534,7 @@ components:
         redeemedAt: { type: string }
     GameState:
       type: object
-      required: [room, players, quests, rewards, encouragements, transactions, redemptions, currentLevel, weekLabel, daysRemaining]
+      required: [room, players, quests, rewards, encouragements, transactions, redemptions, labels, rewardRequests, currentLevel, weekLabel, daysRemaining]
       properties:
         room: { $ref: "#/components/schemas/Room" }
         players:
@@ -381,6 +555,12 @@ components:
         redemptions:
           type: array
           items: { $ref: "#/components/schemas/RewardRedemption" }
+        labels:
+          type: array
+          items: { $ref: "#/components/schemas/Label" }
+        rewardRequests:
+          type: array
+          items: { $ref: "#/components/schemas/RewardRequest" }
         currentLevel: { type: number }
         weekLabel: { type: string }
         daysRemaining: { type: number }
@@ -403,7 +583,8 @@ components:
         ownerId: { type: string }
         title: { type: string, minLength: 1, maxLength: 180 }
         notes: { type: string, maxLength: 500 }
-        dueDate: { type: string, format: date }
+        dueDate: { type: ["string", "null"], format: date }
+        labelId: { type: ["string", "null"] }
         priority:
           type: string
           enum: [small, medium, major]
@@ -413,7 +594,8 @@ components:
         ownerId: { type: string }
         title: { type: string, minLength: 1, maxLength: 180 }
         notes: { type: string, maxLength: 500 }
-        dueDate: { type: string, format: date }
+        dueDate: { type: ["string", "null"], format: date }
+        labelId: { type: ["string", "null"] }
         priority:
           type: string
           enum: [small, medium, major]
@@ -449,4 +631,53 @@ components:
       required: [playerId]
       properties:
         playerId: { type: string }
+    CreateLabelInput:
+      type: object
+      required: [ownerId, name, color]
+      properties:
+        ownerId: { type: string }
+        name: { type: string, minLength: 1, maxLength: 40 }
+        color: { type: string, minLength: 4, maxLength: 24 }
+    UpdateLabelInput:
+      type: object
+      required: [ownerId]
+      properties:
+        ownerId: { type: string }
+        name: { type: string, minLength: 1, maxLength: 40 }
+        color: { type: string, minLength: 4, maxLength: 24 }
+    DeleteLabelInput:
+      type: object
+      required: [ownerId]
+      properties:
+        ownerId: { type: string }
+    UpdateRewardInput:
+      type: object
+      required: [actorId]
+      properties:
+        actorId: { type: string }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: ["string", "null"], maxLength: 300 }
+        cost: { type: number, minimum: 1 }
+    DeleteRewardInput:
+      type: object
+      required: [actorId]
+      properties:
+        actorId: { type: string }
+    CreateRewardRequestInput:
+      type: object
+      required: [requesterId, title, offer]
+      properties:
+        requesterId: { type: string }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: ["string", "null"], maxLength: 300 }
+        offer: { type: number, minimum: 1 }
+    RespondRewardRequestInput:
+      type: object
+      required: [actorId, action]
+      properties:
+        actorId: { type: string }
+        action:
+          type: string
+          enum: [accept, counter, decline]
+        offer: { type: number, minimum: 1 }
 
