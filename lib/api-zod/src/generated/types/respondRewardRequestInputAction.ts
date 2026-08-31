@@ -13,4 +13,5 @@ export const RespondRewardRequestInputAction = {
   accept: 'accept',
   counter: 'counter',
   decline: 'decline',
+  pay: 'pay',
 } as const;

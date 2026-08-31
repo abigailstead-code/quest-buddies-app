@@ -13,6 +13,7 @@ export interface Player {
   id: string;
   name: string;
   avatar: string;
+  color: string;
   coins: number;
   xp: number;
   streak: number;
@@ -37,14 +38,18 @@ export interface Room {
   createdAt: string;
 }
 
-export type QuestPriority = typeof QuestPriority[keyof typeof QuestPriority];
+export interface QuestLink {
+  id: string;
+  /** @minLength 1 */
+  url: string;
+  name: string;
+}
 
-
-export const QuestPriority = {
-  small: 'small',
-  medium: 'medium',
-  major: 'major',
-} as const;
+export interface QuestSubtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
 
 export type QuestStatus = typeof QuestStatus[keyof typeof QuestStatus];
 
@@ -52,6 +57,14 @@ export type QuestStatus = typeof QuestStatus[keyof typeof QuestStatus];
 export const QuestStatus = {
   planned: 'planned',
   completed: 'completed',
+} as const;
+
+export type QuestRewardStatus = typeof QuestRewardStatus[keyof typeof QuestRewardStatus];
+
+
+export const QuestRewardStatus = {
+  pending: 'pending',
+  assigned: 'assigned',
 } as const;
 
 export interface Quest {
@@ -63,10 +76,19 @@ export interface Quest {
   /** @nullable */
   dueDate: string | null;
   /** @nullable */
-  labelId?: string | null;
-  priority: QuestPriority;
+  labelId: string | null;
   status: QuestStatus;
-  coinValue: number;
+  /** @nullable */
+  coinValue: number | null;
+  rewardStatus: QuestRewardStatus;
+  /** @nullable */
+  rewardAssignedBy: string | null;
+  coinsAwarded: boolean;
+  links: QuestLink[];
+  subtasks: QuestSubtask[];
+  stolenCoins: number;
+  /** @nullable */
+  stolenBy: string | null;
   xpValue: number;
   /** @nullable */
   completedAt?: string | null;
@@ -101,12 +123,15 @@ export const RewardRequestStatus = {
   countered: 'countered',
   accepted: 'accepted',
   declined: 'declined',
+  paid: 'paid',
 } as const;
 
 export interface RewardRequest {
   id: string;
   requesterId: string;
   responderId: string;
+  payerId: string;
+  turnPlayerId: string;
   title: string;
   /** @nullable */
   description: string | null;
@@ -191,15 +216,6 @@ export interface JoinRoomInput {
   playerName: string;
 }
 
-export type CreateQuestInputPriority = typeof CreateQuestInputPriority[keyof typeof CreateQuestInputPriority];
-
-
-export const CreateQuestInputPriority = {
-  small: 'small',
-  medium: 'medium',
-  major: 'major',
-} as const;
-
 export interface CreateQuestInput {
   ownerId: string;
   /**
@@ -213,17 +229,9 @@ export interface CreateQuestInput {
   dueDate: string | null;
   /** @nullable */
   labelId?: string | null;
-  priority: CreateQuestInputPriority;
+  links?: QuestLink[];
+  subtasks?: QuestSubtask[];
 }
-
-export type UpdateQuestInputPriority = typeof UpdateQuestInputPriority[keyof typeof UpdateQuestInputPriority];
-
-
-export const UpdateQuestInputPriority = {
-  small: 'small',
-  medium: 'medium',
-  major: 'major',
-} as const;
 
 export interface UpdateQuestInput {
   ownerId?: string;
@@ -238,7 +246,8 @@ export interface UpdateQuestInput {
   dueDate?: string | null;
   /** @nullable */
   labelId?: string | null;
-  priority?: UpdateQuestInputPriority;
+  links?: QuestLink[];
+  subtasks?: QuestSubtask[];
 }
 
 export interface DeleteQuestInput {
@@ -248,6 +257,16 @@ export interface DeleteQuestInput {
 export interface CompleteQuestInput {
   ownerId: string;
   completed: boolean;
+}
+
+export interface SetQuestRewardInput {
+  actorId: string;
+  /** @minimum 1 */
+  coinValue: number;
+}
+
+export interface StealQuestRewardInput {
+  actorId: string;
 }
 
 export interface CreateEncouragementInput {
@@ -354,6 +373,7 @@ export const RespondRewardRequestInputAction = {
   accept: 'accept',
   counter: 'counter',
   decline: 'decline',
+  pay: 'pay',
 } as const;
 
 export interface RespondRewardRequestInput {

@@ -5,8 +5,10 @@
  * Quest Road multiplayer API
  * OpenAPI spec version: 0.1.0
  */
-import type { QuestPriority } from './questPriority';
+import type { QuestLink } from './questLink';
+import type { QuestRewardStatus } from './questRewardStatus';
 import type { QuestStatus } from './questStatus';
+import type { QuestSubtask } from './questSubtask';
 
 export interface Quest {
   id: string;
@@ -17,10 +19,19 @@ export interface Quest {
   /** @nullable */
   dueDate: string | null;
   /** @nullable */
-  labelId?: string | null;
-  priority: QuestPriority;
+  labelId: string | null;
   status: QuestStatus;
-  coinValue: number;
+  /** @nullable */
+  coinValue: number | null;
+  rewardStatus: QuestRewardStatus;
+  /** @nullable */
+  rewardAssignedBy: string | null;
+  coinsAwarded: boolean;
+  links: QuestLink[];
+  subtasks: QuestSubtask[];
+  stolenCoins: number;
+  /** @nullable */
+  stolenBy: string | null;
   xpValue: number;
   /** @nullable */
   completedAt?: string | null;

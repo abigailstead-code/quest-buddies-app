@@ -1,0 +1,1 @@
+- [OpenAPI Zod compatibility](openapi-zod-compat.md) — generated integer schemas may require numeric validation plus explicit server checks.

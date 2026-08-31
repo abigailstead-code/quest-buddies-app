@@ -22,6 +22,9 @@ import {
   RespondToRewardRequestBody,
   SetQuestCompletedResponse,
   SetQuestCompletedBody,
+  SetQuestRewardBody,
+  SetQuestRewardResponse,
+  StealQuestRewardBody,
   UpdateLabelBody,
   UpdateQuestBody,
   UpdateQuestResponse,
@@ -32,6 +35,7 @@ type Player = {
   id: string;
   name: string;
   avatar: string;
+  color: string;
   coins: number;
   xp: number;
   streak: number;
@@ -54,9 +58,15 @@ type Quest = {
   notes: string | null;
   dueDate: string | null;
   labelId: string | null;
-  priority: "small" | "medium" | "major";
   status: "planned" | "completed";
-  coinValue: number;
+  coinValue: number | null;
+  rewardStatus: "pending" | "assigned";
+  rewardAssignedBy: string | null;
+  coinsAwarded: boolean;
+  links: { id: string; url: string; name: string }[];
+  subtasks: { id: string; title: string; completed: boolean }[];
+  stolenCoins: number;
+  stolenBy: string | null;
   xpValue: number;
   completedAt: string | null;
   createdAt: string;
@@ -85,10 +95,12 @@ type RewardRequest = {
   id: string;
   requesterId: string;
   responderId: string;
+  payerId: string;
+  turnPlayerId: string;
   title: string;
   description: string | null;
   offer: number;
-  status: "awaiting_response" | "countered" | "accepted" | "declined";
+  status: "awaiting_response" | "countered" | "accepted" | "declined" | "paid";
   createdAt: string;
   updatedAt: string;
 };
@@ -131,11 +143,7 @@ type RoomStore = {
 };
 
 const rooms = new Map<string, RoomStore>();
-const priorityValues = {
-  small: { coins: 10, xp: 25 },
-  medium: { coins: 20, xp: 50 },
-  major: { coins: 30, xp: 100 },
-} as const;
+const playerColors = ["#d79b4c", "#6f9f8b"] as const;
 
 function now() {
   return new Date().toISOString();
@@ -172,11 +180,12 @@ function makeCode() {
   return randomBytes(4).toString("hex").toUpperCase();
 }
 
-function makePlayer(name: string): Player {
+function makePlayer(name: string, color: string): Player {
   return {
     id: randomUUID(),
     name: name.trim(),
     avatar: "compass",
+    color,
     coins: 0,
     xp: 0,
     streak: 0,
@@ -236,7 +245,19 @@ function gameState(store: RoomStore) {
   return {
     room: store.room,
     players: [store.room.host, store.room.guest].filter(Boolean),
-    quests: store.quests,
+    quests: store.quests.map((quest) => ({
+      ...quest,
+      labelId: quest.labelId ?? null,
+      rewardStatus: quest.rewardStatus ?? (quest.coinValue == null ? "pending" : "assigned"),
+      rewardAssignedBy: quest.rewardAssignedBy ?? null,
+      coinsAwarded: quest.coinsAwarded ?? Boolean(
+        store.transactions.some((transaction) => transaction.kind === "quest" && transaction.sourceId === quest.id),
+      ),
+      links: quest.links ?? [],
+      subtasks: quest.subtasks ?? [],
+      stolenCoins: quest.stolenCoins ?? 0,
+      stolenBy: quest.stolenBy ?? null,
+    })),
     rewards: store.rewards,
     encouragements: store.encouragements,
     transactions: [...store.transactions].reverse(),
@@ -263,9 +284,15 @@ function seedStore(room: Room): RoomStore {
         notes: "Keep it small enough to finish today.",
         dueDate: first,
         labelId: null,
-        priority: "small",
         status: "planned",
-        coinValue: 10,
+        coinValue: null,
+        rewardStatus: "pending",
+        rewardAssignedBy: null,
+        coinsAwarded: false,
+        links: [],
+        subtasks: [],
+        stolenCoins: 0,
+        stolenBy: null,
         xpValue: 25,
         completedAt: null,
         createdAt: now(),
@@ -277,9 +304,15 @@ function seedStore(room: Room): RoomStore {
         notes: "A focused 45-minute session counts.",
         dueDate: second,
         labelId: null,
-        priority: "medium",
         status: "planned",
-        coinValue: 20,
+        coinValue: null,
+        rewardStatus: "pending",
+        rewardAssignedBy: null,
+        coinsAwarded: false,
+        links: [],
+        subtasks: [],
+        stolenCoins: 0,
+        stolenBy: null,
         xpValue: 50,
         completedAt: null,
         createdAt: now(),
@@ -298,7 +331,7 @@ const router: IRouter = Router();
 
 router.post("/rooms", (req, res) => {
   const body = CreateRoomBody.parse(req.body);
-  const host = makePlayer(body.playerName);
+  const host = makePlayer(body.playerName, playerColors[0]);
   const room: Room = {
     id: randomUUID(),
     code: makeCode(),
@@ -336,7 +369,7 @@ router.post("/rooms/:roomId/join", (req, res) => {
     res.status(400).json({ error: "This room already has two players." });
     return;
   }
-  store.room.guest = makePlayer(body.playerName);
+   store.room.guest = makePlayer(body.playerName, playerColors[1]);
   store.room.status = "playing";
   res.json(JoinRoomResponse.parse(store.room));
 });
@@ -361,7 +394,6 @@ router.post("/rooms/:roomId/quests", (req, res) => {
     res.status(403).json({ error: "That player is not in this room." });
     return;
   }
-  const values = priorityValues[body.priority];
   const quest: Quest = {
     id: randomUUID(),
     ownerId: body.ownerId,
@@ -369,10 +401,16 @@ router.post("/rooms/:roomId/quests", (req, res) => {
     notes: body.notes?.trim() || null,
     dueDate: dateValue(body.dueDate) ?? null,
     labelId: body.labelId ?? null,
-    priority: body.priority,
     status: "planned",
-    coinValue: values.coins,
-    xpValue: values.xp,
+    coinValue: null,
+    rewardStatus: "pending",
+    rewardAssignedBy: null,
+    coinsAwarded: false,
+    links: body.links ?? [],
+    subtasks: body.subtasks ?? [],
+    stolenCoins: 0,
+    stolenBy: null,
+    xpValue: 25,
     completedAt: null,
     createdAt: now(),
   };
@@ -392,16 +430,13 @@ router.patch("/rooms/:roomId/quests/:questId", (req, res) => {
     res.status(404).json({ error: "Quest not found or not yours." });
     return;
   }
-  const priority = body.priority ?? quest.priority;
-  const values = priorityValues[priority];
   Object.assign(quest, {
     title: body.title?.trim() ?? quest.title,
     notes: body.notes?.trim() || null,
     dueDate: body.dueDate === undefined ? quest.dueDate : dateValue(body.dueDate) ?? null,
     labelId: body.labelId === undefined ? quest.labelId : body.labelId ?? null,
-    priority,
-    coinValue: values.coins,
-    xpValue: values.xp,
+    links: body.links === undefined ? quest.links ?? [] : body.links,
+    subtasks: body.subtasks === undefined ? quest.subtasks ?? [] : body.subtasks,
   });
   res.json(UpdateQuestResponse.parse(quest));
 });
@@ -439,27 +474,96 @@ router.post("/rooms/:roomId/quests/:questId/complete", (req, res) => {
   const wasCompleted = quest.status === "completed";
   quest.status = body.completed ? "completed" : "planned";
   quest.completedAt = body.completed ? now() : null;
-  if (body.completed && !wasCompleted) {
+  if (body.completed && !wasCompleted && quest.coinValue !== null && !quest.coinsAwarded) {
     store.transactions.push({
       id: randomUUID(),
       playerId: quest.ownerId,
-      amount: quest.coinValue,
+      amount: Math.max(0, quest.coinValue - (quest.stolenCoins ?? 0)),
       kind: "quest",
       label: `Completed: ${quest.title}`,
       sourceId: quest.id,
       createdAt: now(),
     });
-  } else if (!body.completed && wasCompleted) {
-    const transactionIndex = store.transactions.findIndex(
-      (transaction) =>
-        transaction.playerId === quest.ownerId &&
-        transaction.kind === "quest" &&
-        transaction.sourceId === quest.id,
-    );
-    if (transactionIndex >= 0) store.transactions.splice(transactionIndex, 1);
+    quest.coinsAwarded = true;
   }
   syncBalances(store);
   res.json(SetQuestCompletedResponse.parse(quest));
+});
+
+router.post("/rooms/:roomId/quests/:questId/reward", (req, res) => {
+  const store = storeFor(req.params.roomId);
+  if (!store) {
+    res.status(404).json({ error: "Room not found" });
+    return;
+  }
+  const body = SetQuestRewardBody.parse(req.body);
+  const quest = store.quests.find((item) => item.id === req.params.questId);
+  if (!quest || !playerIn(store.room, body.actorId) || quest.ownerId === body.actorId) {
+    res.status(403).json({ error: "Only the other player can set this reward." });
+    return;
+  }
+  if (quest.rewardStatus === "assigned") {
+    res.status(400).json({ error: "This quest already has a reward." });
+    return;
+  }
+  quest.coinValue = body.coinValue;
+  quest.rewardStatus = "assigned";
+  quest.rewardAssignedBy = body.actorId;
+  if (quest.status === "completed" && !quest.coinsAwarded) {
+    store.transactions.push({
+      id: randomUUID(),
+      playerId: quest.ownerId,
+      amount: Math.max(0, body.coinValue - (quest.stolenCoins ?? 0)),
+      kind: "quest",
+      label: `Completed: ${quest.title}`,
+      sourceId: quest.id,
+      createdAt: now(),
+    });
+    quest.coinsAwarded = true;
+  }
+  syncBalances(store);
+  res.json(SetQuestRewardResponse.parse(quest));
+});
+
+router.post("/rooms/:roomId/quests/:questId/steal", (req, res) => {
+  const store = storeFor(req.params.roomId);
+  if (!store) {
+    res.status(404).json({ error: "Room not found" });
+    return;
+  }
+  const body = StealQuestRewardBody.parse(req.body);
+  const quest = store.quests.find((item) => item.id === req.params.questId);
+  if (!quest || !playerIn(store.room, body.actorId) || quest.ownerId === body.actorId) {
+    res.status(403).json({ error: "Only the other player can steal this reward." });
+    return;
+  }
+  if (!quest.dueDate || quest.status === "completed" || quest.coinValue === null || quest.rewardStatus !== "assigned") {
+    res.status(400).json({ error: "This quest is not eligible for stealing." });
+    return;
+  }
+  const overdueAt = new Date(`${quest.dueDate}T23:59:59Z`).getTime() + 48 * 60 * 60 * 1000;
+  if (Date.now() < overdueAt || (quest.stolenCoins ?? 0) > 0) {
+    res.status(400).json({ error: "A reward can only be stolen after 48 hours overdue." });
+    return;
+  }
+  const amount = Math.floor(quest.coinValue / 2);
+  if (amount < 1) {
+    res.status(400).json({ error: "This reward is too small to split." });
+    return;
+  }
+  quest.stolenCoins = amount;
+  quest.stolenBy = body.actorId;
+  store.transactions.push({
+    id: randomUUID(),
+    playerId: body.actorId,
+    amount,
+    kind: "quest",
+    label: `Stole overdue reward: ${quest.title}`,
+    sourceId: `${quest.id}:stolen`,
+    createdAt: now(),
+  });
+  syncBalances(store);
+  res.json(quest);
 });
 
 router.post("/rooms/:roomId/encouragements", (req, res) => {
@@ -667,6 +771,8 @@ router.post("/rooms/:roomId/reward-requests", (req, res) => {
     id: randomUUID(),
     requesterId: body.requesterId,
     responderId: responder.id,
+    payerId: body.requesterId,
+    turnPlayerId: responder.id,
     title: body.title.trim(),
     description: body.description?.trim() || null,
     offer: body.offer,
@@ -690,20 +796,48 @@ router.post("/rooms/:roomId/reward-requests/:requestId/respond", (req, res) => {
     res.status(404).json({ error: "Reward request not found." });
     return;
   }
-  const expectedActor =
-    request.status === "awaiting_response" ? request.responderId :
-    request.status === "countered" ? request.requesterId : "";
-  if (body.actorId !== expectedActor) {
+  if (body.action === "pay") {
+    if (request.status !== "accepted" || body.actorId !== request.payerId) {
+      res.status(400).json({ error: "Only the payer can confirm an accepted offer." });
+      return;
+    }
+    if (store.transactions.some((transaction) => transaction.sourceId === `${request.id}:payment`)) {
+      res.status(400).json({ error: "This reward has already been paid." });
+      return;
+    }
+    syncBalances(store);
+    const payer = playerFor(store, request.payerId);
+    if (!payer || payer.coins < request.offer) {
+      res.status(400).json({ error: "The payer does not have enough coins to pay this offer." });
+      return;
+    }
+    store.transactions.push({
+      id: randomUUID(),
+      playerId: request.payerId,
+      amount: -request.offer,
+      kind: "reward",
+      label: `${payer.name} bought ${request.title}`,
+      sourceId: `${request.id}:payment`,
+      createdAt: now(),
+    });
+    request.status = "paid";
+    request.updatedAt = now();
+    syncBalances(store);
+    res.json(request);
+    return;
+  }
+  if (body.actorId !== request.turnPlayerId || ["accepted", "declined", "paid"].includes(request.status)) {
     res.status(400).json({ error: "This request is waiting for the other player." });
     return;
   }
   if (body.action === "counter") {
-    if (!body.offer) {
+    if (body.offer === undefined) {
       res.status(400).json({ error: "Add a counteroffer amount." });
       return;
     }
     request.offer = body.offer;
     request.status = "countered";
+    request.turnPlayerId = request.turnPlayerId === request.requesterId ? request.responderId : request.requesterId;
     request.updatedAt = now();
     res.json(request);
     return;
@@ -714,24 +848,9 @@ router.post("/rooms/:roomId/reward-requests/:requestId/respond", (req, res) => {
     res.json(request);
     return;
   }
-  syncBalances(store);
-  const requester = playerFor(store, request.requesterId);
-  if (!requester || requester.coins < request.offer) {
-    res.status(400).json({ error: "The requester no longer has enough coins for this offer." });
-    return;
-  }
   request.status = "accepted";
+  request.turnPlayerId = request.payerId;
   request.updatedAt = now();
-  store.transactions.push({
-    id: randomUUID(),
-    playerId: request.requesterId,
-    amount: -request.offer,
-    kind: "reward",
-    label: `Accepted reward: ${request.title}`,
-    sourceId: request.id,
-    createdAt: now(),
-  });
-  syncBalances(store);
   res.json(request);
 });
 

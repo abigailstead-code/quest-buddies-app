@@ -5,7 +5,8 @@
  * Quest Road multiplayer API
  * OpenAPI spec version: 0.1.0
  */
-import type { UpdateQuestInputPriority } from './updateQuestInputPriority';
+import type { QuestLink } from './questLink';
+import type { QuestSubtask } from './questSubtask';
 
 export interface UpdateQuestInput {
   ownerId?: string;
@@ -20,5 +21,6 @@ export interface UpdateQuestInput {
   dueDate?: Date | null;
   /** @nullable */
   labelId?: string | null;
-  priority?: UpdateQuestInputPriority;
+  links?: QuestLink[];
+  subtasks?: QuestSubtask[];
 }

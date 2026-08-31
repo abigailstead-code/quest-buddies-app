@@ -11,6 +11,8 @@ export interface RewardRequest {
   id: string;
   requesterId: string;
   responderId: string;
+  payerId: string;
+  turnPlayerId: string;
   title: string;
   /** @nullable */
   description: string | null;

@@ -14,4 +14,5 @@ export const RewardRequestStatus = {
   countered: 'countered',
   accepted: 'accepted',
   declined: 'declined',
+  paid: 'paid',
 } as const;

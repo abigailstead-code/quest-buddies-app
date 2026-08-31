@@ -40,6 +40,7 @@ export const CreateRoomResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -48,6 +49,7 @@ export const CreateRoomResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -76,6 +78,7 @@ export const GetRoomResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -84,6 +87,7 @@ export const GetRoomResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -124,6 +128,7 @@ export const JoinRoomResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -132,6 +137,7 @@ export const JoinRoomResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -151,6 +157,9 @@ export const GetGameStateParams = zod.object({
   "roomId": zod.coerce.string().min(getGameStatePathRoomIdMin)
 })
 
+
+
+
 export const GetGameStateResponse = zod.object({
   "room": zod.object({
   "id": zod.string(),
@@ -161,6 +170,7 @@ export const GetGameStateResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -169,6 +179,7 @@ export const GetGameStateResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -179,6 +190,7 @@ export const GetGameStateResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "avatar": zod.string(),
+  "color": zod.string(),
   "coins": zod.number(),
   "xp": zod.number(),
   "streak": zod.number()
@@ -189,10 +201,24 @@ export const GetGameStateResponse = zod.object({
   "title": zod.string(),
   "notes": zod.string().nullable(),
   "dueDate": zod.string().nullable(),
-  "labelId": zod.string().nullish(),
-  "priority": zod.enum(['small', 'medium', 'major']),
+  "labelId": zod.string().nullable(),
   "status": zod.enum(['planned', 'completed']),
-  "coinValue": zod.number(),
+  "coinValue": zod.number().nullable(),
+  "rewardStatus": zod.enum(['pending', 'assigned']),
+  "rewardAssignedBy": zod.string().nullable(),
+  "coinsAwarded": zod.boolean(),
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})),
+  "stolenCoins": zod.number(),
+  "stolenBy": zod.string().nullable(),
   "xpValue": zod.number(),
   "completedAt": zod.string().nullish(),
   "createdAt": zod.string()
@@ -240,10 +266,12 @@ export const GetGameStateResponse = zod.object({
   "id": zod.string(),
   "requesterId": zod.string(),
   "responderId": zod.string(),
+  "payerId": zod.string(),
+  "turnPlayerId": zod.string(),
   "title": zod.string(),
   "description": zod.string().nullable(),
   "offer": zod.number(),
-  "status": zod.enum(['awaiting_response', 'countered', 'accepted', 'declined']),
+  "status": zod.enum(['awaiting_response', 'countered', 'accepted', 'declined', 'paid']),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })),
@@ -270,14 +298,27 @@ export const createQuestBodyNotesMax = 500;
 
 
 
+
 export const CreateQuestBody = zod.object({
   "ownerId": zod.string(),
   "title": zod.string().min(1).max(createQuestBodyTitleMax),
   "notes": zod.string().max(createQuestBodyNotesMax).optional(),
   "dueDate": zod.coerce.date().nullable(),
   "labelId": zod.string().nullish(),
-  "priority": zod.enum(['small', 'medium', 'major'])
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})).optional(),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})).optional()
 })
+
+
+
 
 export const CreateQuestResponse = zod.object({
   "id": zod.string(),
@@ -285,10 +326,24 @@ export const CreateQuestResponse = zod.object({
   "title": zod.string(),
   "notes": zod.string().nullable(),
   "dueDate": zod.string().nullable(),
-  "labelId": zod.string().nullish(),
-  "priority": zod.enum(['small', 'medium', 'major']),
+  "labelId": zod.string().nullable(),
   "status": zod.enum(['planned', 'completed']),
-  "coinValue": zod.number(),
+  "coinValue": zod.number().nullable(),
+  "rewardStatus": zod.enum(['pending', 'assigned']),
+  "rewardAssignedBy": zod.string().nullable(),
+  "coinsAwarded": zod.boolean(),
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})),
+  "stolenCoins": zod.number(),
+  "stolenBy": zod.string().nullable(),
   "xpValue": zod.number(),
   "completedAt": zod.string().nullish(),
   "createdAt": zod.string()
@@ -313,14 +368,27 @@ export const updateQuestBodyNotesMax = 500;
 
 
 
+
 export const UpdateQuestBody = zod.object({
   "ownerId": zod.string().optional(),
   "title": zod.string().min(1).max(updateQuestBodyTitleMax).optional(),
   "notes": zod.string().max(updateQuestBodyNotesMax).optional(),
   "dueDate": zod.coerce.date().nullish(),
   "labelId": zod.string().nullish(),
-  "priority": zod.enum(['small', 'medium', 'major']).optional()
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})).optional(),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})).optional()
 })
+
+
+
 
 export const UpdateQuestResponse = zod.object({
   "id": zod.string(),
@@ -328,10 +396,24 @@ export const UpdateQuestResponse = zod.object({
   "title": zod.string(),
   "notes": zod.string().nullable(),
   "dueDate": zod.string().nullable(),
-  "labelId": zod.string().nullish(),
-  "priority": zod.enum(['small', 'medium', 'major']),
+  "labelId": zod.string().nullable(),
   "status": zod.enum(['planned', 'completed']),
-  "coinValue": zod.number(),
+  "coinValue": zod.number().nullable(),
+  "rewardStatus": zod.enum(['pending', 'assigned']),
+  "rewardAssignedBy": zod.string().nullable(),
+  "coinsAwarded": zod.boolean(),
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})),
+  "stolenCoins": zod.number(),
+  "stolenBy": zod.string().nullable(),
   "xpValue": zod.number(),
   "completedAt": zod.string().nullish(),
   "createdAt": zod.string()
@@ -374,16 +456,135 @@ export const SetQuestCompletedBody = zod.object({
   "completed": zod.boolean()
 })
 
+
+
+
 export const SetQuestCompletedResponse = zod.object({
   "id": zod.string(),
   "ownerId": zod.string(),
   "title": zod.string(),
   "notes": zod.string().nullable(),
   "dueDate": zod.string().nullable(),
-  "labelId": zod.string().nullish(),
-  "priority": zod.enum(['small', 'medium', 'major']),
+  "labelId": zod.string().nullable(),
   "status": zod.enum(['planned', 'completed']),
-  "coinValue": zod.number(),
+  "coinValue": zod.number().nullable(),
+  "rewardStatus": zod.enum(['pending', 'assigned']),
+  "rewardAssignedBy": zod.string().nullable(),
+  "coinsAwarded": zod.boolean(),
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})),
+  "stolenCoins": zod.number(),
+  "stolenBy": zod.string().nullable(),
+  "xpValue": zod.number(),
+  "completedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Set the reward for another player's quest
+ */
+export const setQuestRewardPathRoomIdMin = 4;
+
+
+
+export const SetQuestRewardParams = zod.object({
+  "roomId": zod.coerce.string().min(setQuestRewardPathRoomIdMin),
+  "questId": zod.coerce.string()
+})
+
+
+
+
+export const SetQuestRewardBody = zod.object({
+  "actorId": zod.string(),
+  "coinValue": zod.number().min(1)
+})
+
+
+
+
+export const SetQuestRewardResponse = zod.object({
+  "id": zod.string(),
+  "ownerId": zod.string(),
+  "title": zod.string(),
+  "notes": zod.string().nullable(),
+  "dueDate": zod.string().nullable(),
+  "labelId": zod.string().nullable(),
+  "status": zod.enum(['planned', 'completed']),
+  "coinValue": zod.number().nullable(),
+  "rewardStatus": zod.enum(['pending', 'assigned']),
+  "rewardAssignedBy": zod.string().nullable(),
+  "coinsAwarded": zod.boolean(),
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})),
+  "stolenCoins": zod.number(),
+  "stolenBy": zod.string().nullable(),
+  "xpValue": zod.number(),
+  "completedAt": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Steal half of an eligible overdue quest reward
+ */
+export const stealQuestRewardPathRoomIdMin = 4;
+
+
+
+export const StealQuestRewardParams = zod.object({
+  "roomId": zod.coerce.string().min(stealQuestRewardPathRoomIdMin),
+  "questId": zod.coerce.string()
+})
+
+export const StealQuestRewardBody = zod.object({
+  "actorId": zod.string()
+})
+
+
+
+
+export const StealQuestRewardResponse = zod.object({
+  "id": zod.string(),
+  "ownerId": zod.string(),
+  "title": zod.string(),
+  "notes": zod.string().nullable(),
+  "dueDate": zod.string().nullable(),
+  "labelId": zod.string().nullable(),
+  "status": zod.enum(['planned', 'completed']),
+  "coinValue": zod.number().nullable(),
+  "rewardStatus": zod.enum(['pending', 'assigned']),
+  "rewardAssignedBy": zod.string().nullable(),
+  "coinsAwarded": zod.boolean(),
+  "links": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string().min(1),
+  "name": zod.string()
+})),
+  "subtasks": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "completed": zod.boolean()
+})),
+  "stolenCoins": zod.number(),
+  "stolenBy": zod.string().nullable(),
   "xpValue": zod.number(),
   "completedAt": zod.string().nullish(),
   "createdAt": zod.string()
@@ -657,10 +858,12 @@ export const CreateRewardRequestResponse = zod.object({
   "id": zod.string(),
   "requesterId": zod.string(),
   "responderId": zod.string(),
+  "payerId": zod.string(),
+  "turnPlayerId": zod.string(),
   "title": zod.string(),
   "description": zod.string().nullable(),
   "offer": zod.number(),
-  "status": zod.enum(['awaiting_response', 'countered', 'accepted', 'declined']),
+  "status": zod.enum(['awaiting_response', 'countered', 'accepted', 'declined', 'paid']),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -683,7 +886,7 @@ export const RespondToRewardRequestParams = zod.object({
 
 export const RespondToRewardRequestBody = zod.object({
   "actorId": zod.string(),
-  "action": zod.enum(['accept', 'counter', 'decline']),
+  "action": zod.enum(['accept', 'counter', 'decline', 'pay']),
   "offer": zod.number().min(1).optional()
 })
 
@@ -691,10 +894,12 @@ export const RespondToRewardRequestResponse = zod.object({
   "id": zod.string(),
   "requesterId": zod.string(),
   "responderId": zod.string(),
+  "payerId": zod.string(),
+  "turnPlayerId": zod.string(),
   "title": zod.string(),
   "description": zod.string().nullable(),
   "offer": zod.number(),
-  "status": zod.enum(['awaiting_response', 'countered', 'accepted', 'declined']),
+  "status": zod.enum(['awaiting_response', 'countered', 'accepted', 'declined', 'paid']),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })

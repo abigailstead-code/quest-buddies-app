@@ -6,12 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface Player {
+export interface QuestSubtask {
   id: string;
-  name: string;
-  avatar: string;
-  color: string;
-  coins: number;
-  xp: number;
-  streak: number;
+  title: string;
+  completed: boolean;
 }

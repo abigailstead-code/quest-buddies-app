@@ -178,6 +178,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Quest"
+  /rooms/{roomId}/quests/{questId}/reward:
+    post:
+      operationId: setQuestReward
+      tags: [game]
+      summary: Set the reward for another player's quest
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/QuestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetQuestRewardInput"
+      responses:
+        "200":
+          description: Updated quest reward
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quest"
+        "400":
+          description: Invalid reward assignment
+  /rooms/{roomId}/quests/{questId}/steal:
+    post:
+      operationId: stealQuestReward
+      tags: [game]
+      summary: Steal half of an eligible overdue quest reward
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - $ref: "#/components/parameters/QuestId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StealQuestRewardInput"
+      responses:
+        "200":
+          description: Updated quest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quest"
+        "400":
+          description: Quest is not eligible to steal
   /rooms/{roomId}/encouragements:
     post:
       operationId: createEncouragement
@@ -421,11 +467,12 @@ components:
         - status
     Player:
       type: object
-      required: [id, name, avatar, coins, xp, streak]
+      required: [id, name, avatar, color, coins, xp, streak]
       properties:
         id: { type: string }
         name: { type: string }
         avatar: { type: string }
+        color: { type: string }
         coins: { type: number }
         xp: { type: number }
         streak: { type: number }
@@ -446,9 +493,23 @@ components:
           allOf:
             - $ref: "#/components/schemas/Player"
         createdAt: { type: string }
+    QuestLink:
+      type: object
+      required: [id, url, name]
+      properties:
+        id: { type: string }
+        url: { type: string, minLength: 1 }
+        name: { type: string }
+    QuestSubtask:
+      type: object
+      required: [id, title, completed]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        completed: { type: boolean }
     Quest:
       type: object
-      required: [id, ownerId, title, notes, dueDate, priority, status, coinValue, xpValue, createdAt]
+      required: [id, ownerId, title, notes, dueDate, labelId, status, coinValue, rewardStatus, rewardAssignedBy, coinsAwarded, links, subtasks, stolenCoins, stolenBy, xpValue, createdAt]
       properties:
         id: { type: string }
         ownerId: { type: string }
@@ -456,13 +517,23 @@ components:
         notes: { type: ["string", "null"] }
         dueDate: { type: ["string", "null"] }
         labelId: { type: ["string", "null"] }
-        priority:
-          type: string
-          enum: [small, medium, major]
         status:
           type: string
           enum: [planned, completed]
-        coinValue: { type: number }
+        coinValue: { type: ["number", "null"] }
+        rewardStatus:
+          type: string
+          enum: [pending, assigned]
+        rewardAssignedBy: { type: ["string", "null"] }
+        coinsAwarded: { type: boolean }
+        links:
+          type: array
+          items: { $ref: "#/components/schemas/QuestLink" }
+        subtasks:
+          type: array
+          items: { $ref: "#/components/schemas/QuestSubtask" }
+        stolenCoins: { type: number }
+        stolenBy: { type: ["string", "null"] }
         xpValue: { type: number }
         completedAt: { type: ["string", "null"] }
         createdAt: { type: string }
@@ -489,17 +560,19 @@ components:
         createdAt: { type: string }
     RewardRequest:
       type: object
-      required: [id, requesterId, responderId, title, description, offer, status, createdAt, updatedAt]
+      required: [id, requesterId, responderId, payerId, turnPlayerId, title, description, offer, status, createdAt, updatedAt]
       properties:
         id: { type: string }
         requesterId: { type: string }
         responderId: { type: string }
+        payerId: { type: string }
+        turnPlayerId: { type: string }
         title: { type: string }
         description: { type: ["string", "null"] }
         offer: { type: number }
         status:
           type: string
-          enum: [awaiting_response, countered, accepted, declined]
+          enum: [awaiting_response, countered, accepted, declined, paid]
         createdAt: { type: string }
         updatedAt: { type: string }
     Encouragement:
@@ -578,16 +651,19 @@ components:
         playerName: { type: string, minLength: 1, maxLength: 40 }
     CreateQuestInput:
       type: object
-      required: [ownerId, title, dueDate, priority]
+      required: [ownerId, title, dueDate]
       properties:
         ownerId: { type: string }
         title: { type: string, minLength: 1, maxLength: 180 }
         notes: { type: string, maxLength: 500 }
         dueDate: { type: ["string", "null"], format: date }
         labelId: { type: ["string", "null"] }
-        priority:
-          type: string
-          enum: [small, medium, major]
+        links:
+          type: array
+          items: { $ref: "#/components/schemas/QuestLink" }
+        subtasks:
+          type: array
+          items: { $ref: "#/components/schemas/QuestSubtask" }
     UpdateQuestInput:
       type: object
       properties:
@@ -596,9 +672,12 @@ components:
         notes: { type: string, maxLength: 500 }
         dueDate: { type: ["string", "null"], format: date }
         labelId: { type: ["string", "null"] }
-        priority:
-          type: string
-          enum: [small, medium, major]
+        links:
+          type: array
+          items: { $ref: "#/components/schemas/QuestLink" }
+        subtasks:
+          type: array
+          items: { $ref: "#/components/schemas/QuestSubtask" }
     DeleteQuestInput:
       type: object
       required: [ownerId]
@@ -610,6 +689,19 @@ components:
       properties:
         ownerId: { type: string }
         completed: { type: boolean }
+    SetQuestRewardInput:
+      type: object
+      required: [actorId, coinValue]
+      properties:
+        actorId: { type: string }
+        coinValue:
+          type: number
+          minimum: 1
+    StealQuestRewardInput:
+      type: object
+      required: [actorId]
+      properties:
+        actorId: { type: string }
     CreateEncouragementInput:
       type: object
       required: [fromId, toId, message]
@@ -678,6 +770,6 @@ components:
         actorId: { type: string }
         action:
           type: string
-          enum: [accept, counter, decline]
+          enum: [accept, counter, decline, pay]
         offer: { type: number, minimum: 1 }
 

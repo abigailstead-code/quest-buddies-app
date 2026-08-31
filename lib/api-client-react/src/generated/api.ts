@@ -42,6 +42,8 @@ import type {
   RewardRedemption,
   RewardRequest,
   Room,
+  SetQuestRewardInput,
+  StealQuestRewardInput,
   UpdateLabelInput,
   UpdateQuestInput,
   UpdateRewardInput
@@ -741,6 +743,154 @@ export const useSetQuestCompleted = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getSetQuestCompletedMutationOptions(options));
+    }
+
+export const getSetQuestRewardUrl = (roomId: string,
+    questId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/quests/${questId}/reward`
+}
+
+/**
+ * @summary Set the reward for another player's quest
+ */
+export const setQuestReward = async (roomId: string,
+    questId: string,
+    setQuestRewardInput: SetQuestRewardInput, options?: Parameters<typeof customFetch>[1]): Promise<Quest> => {
+
+  return customFetch<Quest>(getSetQuestRewardUrl(roomId,questId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(setQuestRewardInput)
+  }
+);}
+
+
+
+
+
+export const getSetQuestRewardMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setQuestReward>>, TError,{roomId: string;questId: string;data: BodyType<SetQuestRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setQuestReward>>, TError,{roomId: string;questId: string;data: BodyType<SetQuestRewardInput>}, TContext> => {
+
+const mutationKey = ['setQuestReward'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setQuestReward>>, {roomId: string;questId: string;data: BodyType<SetQuestRewardInput>}> = (props) => {
+          const {roomId,questId,data} = props ?? {};
+
+          return  setQuestReward(roomId,questId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetQuestRewardMutationResult = NonNullable<Awaited<ReturnType<typeof setQuestReward>>>
+    export type SetQuestRewardMutationBody = BodyType<SetQuestRewardInput>
+    export type SetQuestRewardMutationError = ErrorType<void>
+
+    /**
+ * @summary Set the reward for another player's quest
+ */
+export const useSetQuestReward = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setQuestReward>>, TError,{roomId: string;questId: string;data: BodyType<SetQuestRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setQuestReward>>,
+        TError,
+        {roomId: string;questId: string;data: BodyType<SetQuestRewardInput>},
+        TContext
+      > => {
+      return useMutation(getSetQuestRewardMutationOptions(options));
+    }
+
+export const getStealQuestRewardUrl = (roomId: string,
+    questId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/quests/${questId}/steal`
+}
+
+/**
+ * @summary Steal half of an eligible overdue quest reward
+ */
+export const stealQuestReward = async (roomId: string,
+    questId: string,
+    stealQuestRewardInput: StealQuestRewardInput, options?: Parameters<typeof customFetch>[1]): Promise<Quest> => {
+
+  return customFetch<Quest>(getStealQuestRewardUrl(roomId,questId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(stealQuestRewardInput)
+  }
+);}
+
+
+
+
+
+export const getStealQuestRewardMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stealQuestReward>>, TError,{roomId: string;questId: string;data: BodyType<StealQuestRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof stealQuestReward>>, TError,{roomId: string;questId: string;data: BodyType<StealQuestRewardInput>}, TContext> => {
+
+const mutationKey = ['stealQuestReward'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof stealQuestReward>>, {roomId: string;questId: string;data: BodyType<StealQuestRewardInput>}> = (props) => {
+          const {roomId,questId,data} = props ?? {};
+
+          return  stealQuestReward(roomId,questId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StealQuestRewardMutationResult = NonNullable<Awaited<ReturnType<typeof stealQuestReward>>>
+    export type StealQuestRewardMutationBody = BodyType<StealQuestRewardInput>
+    export type StealQuestRewardMutationError = ErrorType<void>
+
+    /**
+ * @summary Steal half of an eligible overdue quest reward
+ */
+export const useStealQuestReward = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stealQuestReward>>, TError,{roomId: string;questId: string;data: BodyType<StealQuestRewardInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof stealQuestReward>>,
+        TError,
+        {roomId: string;questId: string;data: BodyType<StealQuestRewardInput>},
+        TContext
+      > => {
+      return useMutation(getStealQuestRewardMutationOptions(options));
     }
 
 export const getCreateEncouragementUrl = (roomId: string,) => {
