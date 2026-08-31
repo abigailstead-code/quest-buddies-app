@@ -20,6 +20,9 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  BingoBoard,
+  BingoSuggestion,
+  BingoSuggestionInput,
   CompleteQuestInput,
   CreateEncouragementInput,
   CreateLabelInput,
@@ -450,6 +453,160 @@ export function useGetGameState<TData = Awaited<ReturnType<typeof getGameState>>
 
 
 
+
+export const getGetBingoBoardUrl = (roomId: string,
+    weekStart: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/bingo/${weekStart}`
+}
+
+/**
+ * @summary Get a weekly Journey Bingo board
+ */
+export const getBingoBoard = async (roomId: string,
+    weekStart: string, options?: Parameters<typeof customFetch>[1]): Promise<BingoBoard> => {
+
+  return customFetch<BingoBoard>(getGetBingoBoardUrl(roomId,weekStart),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBingoBoardQueryKey = (roomId: string,
+    weekStart: string,) => {
+    return [
+    `/api/rooms/${roomId}/bingo/${weekStart}`
+    ] as const;
+    }
+
+
+export const getGetBingoBoardQueryOptions = <TData = Awaited<ReturnType<typeof getBingoBoard>>, TError = ErrorType<unknown>>(roomId: string,
+    weekStart: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBingoBoard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBingoBoardQueryKey(roomId,weekStart);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBingoBoard>>> = ({ signal }) => getBingoBoard(roomId,weekStart, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: roomId !== null && roomId !== undefined && weekStart !== null && weekStart !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBingoBoard>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBingoBoardQueryResult = NonNullable<Awaited<ReturnType<typeof getBingoBoard>>>
+export type GetBingoBoardQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get a weekly Journey Bingo board
+ */
+
+export function useGetBingoBoard<TData = Awaited<ReturnType<typeof getBingoBoard>>, TError = ErrorType<unknown>>(
+ roomId: string,
+    weekStart: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBingoBoard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBingoBoardQueryOptions(roomId,weekStart,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSuggestBingoSquareUrl = (roomId: string,) => {
+
+
+
+
+  return `/api/rooms/${roomId}/bingo/suggestions`
+}
+
+/**
+ * @summary Suggest a square for a future Bingo board
+ */
+export const suggestBingoSquare = async (roomId: string,
+    bingoSuggestionInput: BingoSuggestionInput, options?: Parameters<typeof customFetch>[1]): Promise<BingoSuggestion> => {
+
+  return customFetch<BingoSuggestion>(getSuggestBingoSquareUrl(roomId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bingoSuggestionInput)
+  }
+);}
+
+
+
+
+
+export const getSuggestBingoSquareMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestBingoSquare>>, TError,{roomId: string;data: BodyType<BingoSuggestionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suggestBingoSquare>>, TError,{roomId: string;data: BodyType<BingoSuggestionInput>}, TContext> => {
+
+const mutationKey = ['suggestBingoSquare'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suggestBingoSquare>>, {roomId: string;data: BodyType<BingoSuggestionInput>}> = (props) => {
+          const {roomId,data} = props ?? {};
+
+          return  suggestBingoSquare(roomId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuggestBingoSquareMutationResult = NonNullable<Awaited<ReturnType<typeof suggestBingoSquare>>>
+    export type SuggestBingoSquareMutationBody = BodyType<BingoSuggestionInput>
+    export type SuggestBingoSquareMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Suggest a square for a future Bingo board
+ */
+export const useSuggestBingoSquare = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestBingoSquare>>, TError,{roomId: string;data: BodyType<BingoSuggestionInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof suggestBingoSquare>>,
+        TError,
+        {roomId: string;data: BodyType<BingoSuggestionInput>},
+        TContext
+      > => {
+      return useMutation(getSuggestBingoSquareMutationOptions(options));
+    }
 
 export const getCreateQuestUrl = (roomId: string,) => {
 

@@ -282,6 +282,71 @@ export const GetGameStateResponse = zod.object({
 
 
 /**
+ * @summary Get a weekly Journey Bingo board
+ */
+export const getBingoBoardPathRoomIdMin = 4;
+
+
+
+export const GetBingoBoardParams = zod.object({
+  "roomId": zod.coerce.string().min(getBingoBoardPathRoomIdMin),
+  "weekStart": zod.date()
+})
+
+export const GetBingoBoardResponse = zod.object({
+  "weekStart": zod.coerce.date(),
+  "weekLabel": zod.string(),
+  "status": zod.enum(['active', 'past', 'locked']),
+  "unlockDate": zod.coerce.date().nullish(),
+  "squares": zod.array(zod.object({
+  "id": zod.string(),
+  "text": zod.string(),
+  "intensity": zod.enum(['light', 'medium', 'stretch']),
+  "family": zod.string(),
+  "completed": zod.boolean(),
+  "completedAt": zod.string().nullable(),
+  "contributorIds": zod.array(zod.string())
+})),
+  "lineCount": zod.number(),
+  "lineBonusAwarded": zod.boolean(),
+  "threeLineBonusAwarded": zod.boolean(),
+  "fullBoardBonusAwarded": zod.boolean()
+})
+
+
+/**
+ * @summary Suggest a square for a future Bingo board
+ */
+export const suggestBingoSquarePathRoomIdMin = 4;
+
+
+
+export const SuggestBingoSquareParams = zod.object({
+  "roomId": zod.coerce.string().min(suggestBingoSquarePathRoomIdMin)
+})
+
+export const suggestBingoSquareBodyTextMin = 5;
+export const suggestBingoSquareBodyTextMax = 180;
+
+
+
+export const SuggestBingoSquareBody = zod.object({
+  "playerId": zod.string(),
+  "text": zod.string().min(suggestBingoSquareBodyTextMin).max(suggestBingoSquareBodyTextMax),
+  "intensity": zod.enum(['light', 'medium', 'stretch', 'undecided']).optional()
+})
+
+export const SuggestBingoSquareResponse = zod.object({
+  "id": zod.string(),
+  "playerId": zod.string(),
+  "text": zod.string(),
+  "intensity": zod.enum(['light', 'medium', 'stretch', 'undecided']),
+  "weekStart": zod.coerce.date(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Add a personal quest to a room
  */
 export const createQuestPathRoomIdMin = 4;

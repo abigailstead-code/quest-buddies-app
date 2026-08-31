@@ -100,6 +100,44 @@ paths:
                 $ref: "#/components/schemas/GameState"
         "404":
           description: Room not found
+  /rooms/{roomId}/bingo/{weekStart}:
+    get:
+      operationId: getBingoBoard
+      tags: [game]
+      summary: Get a weekly Journey Bingo board
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+        - name: weekStart
+          in: path
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        "200":
+          description: Weekly Bingo board or locked future week
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoBoard"
+  /rooms/{roomId}/bingo/suggestions:
+    post:
+      operationId: suggestBingoSquare
+      tags: [game]
+      summary: Suggest a square for a future Bingo board
+      parameters:
+        - $ref: "#/components/parameters/RoomId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BingoSuggestionInput"
+      responses:
+        "201":
+          description: Saved suggestion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BingoSuggestion"
   /rooms/{roomId}/quests:
     post:
       operationId: createQuest
@@ -637,6 +675,59 @@ components:
         currentLevel: { type: number }
         weekLabel: { type: string }
         daysRemaining: { type: number }
+    BingoSquare:
+      type: object
+      required: [id, text, intensity, family, completed, completedAt, contributorIds]
+      properties:
+        id: { type: string }
+        text: { type: string }
+        intensity:
+          type: string
+          enum: [light, medium, stretch]
+        family: { type: string }
+        completed: { type: boolean }
+        completedAt: { type: ["string", "null"] }
+        contributorIds:
+          type: array
+          items: { type: string }
+    BingoBoard:
+      type: object
+      required: [weekStart, weekLabel, status, squares, lineCount, lineBonusAwarded, threeLineBonusAwarded, fullBoardBonusAwarded]
+      properties:
+        weekStart: { type: string, format: date }
+        weekLabel: { type: string }
+        status:
+          type: string
+          enum: [active, past, locked]
+        unlockDate: { type: ["string", "null"], format: date }
+        squares:
+          type: array
+          items: { $ref: "#/components/schemas/BingoSquare" }
+        lineCount: { type: number }
+        lineBonusAwarded: { type: boolean }
+        threeLineBonusAwarded: { type: boolean }
+        fullBoardBonusAwarded: { type: boolean }
+    BingoSuggestion:
+      type: object
+      required: [id, playerId, text, intensity, weekStart, createdAt]
+      properties:
+        id: { type: string }
+        playerId: { type: string }
+        text: { type: string }
+        intensity:
+          type: string
+          enum: [light, medium, stretch, undecided]
+        weekStart: { type: string, format: date }
+        createdAt: { type: string }
+    BingoSuggestionInput:
+      type: object
+      required: [playerId, text]
+      properties:
+        playerId: { type: string }
+        text: { type: string, minLength: 5, maxLength: 180 }
+        intensity:
+          type: string
+          enum: [light, medium, stretch, undecided]
     CreateRoomInput:
       type: object
       required: [name, playerName]

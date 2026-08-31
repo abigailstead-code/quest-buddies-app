@@ -6,6 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './bingoBoard';
+export * from './bingoBoardStatus';
+export * from './bingoSquare';
+export * from './bingoSquareIntensity';
+export * from './bingoSuggestion';
+export * from './bingoSuggestionInput';
+export * from './bingoSuggestionInputIntensity';
+export * from './bingoSuggestionIntensity';
 export * from './completeQuestInput';
 export * from './createEncouragementInput';
 export * from './createLabelInput';

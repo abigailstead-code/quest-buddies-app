@@ -190,6 +190,87 @@ export interface GameState {
   daysRemaining: number;
 }
 
+export type BingoSquareIntensity = typeof BingoSquareIntensity[keyof typeof BingoSquareIntensity];
+
+
+export const BingoSquareIntensity = {
+  light: 'light',
+  medium: 'medium',
+  stretch: 'stretch',
+} as const;
+
+export interface BingoSquare {
+  id: string;
+  text: string;
+  intensity: BingoSquareIntensity;
+  family: string;
+  completed: boolean;
+  /** @nullable */
+  completedAt: string | null;
+  contributorIds: string[];
+}
+
+export type BingoBoardStatus = typeof BingoBoardStatus[keyof typeof BingoBoardStatus];
+
+
+export const BingoBoardStatus = {
+  active: 'active',
+  past: 'past',
+  locked: 'locked',
+} as const;
+
+export interface BingoBoard {
+  weekStart: string;
+  weekLabel: string;
+  status: BingoBoardStatus;
+  /** @nullable */
+  unlockDate?: string | null;
+  squares: BingoSquare[];
+  lineCount: number;
+  lineBonusAwarded: boolean;
+  threeLineBonusAwarded: boolean;
+  fullBoardBonusAwarded: boolean;
+}
+
+export type BingoSuggestionIntensity = typeof BingoSuggestionIntensity[keyof typeof BingoSuggestionIntensity];
+
+
+export const BingoSuggestionIntensity = {
+  light: 'light',
+  medium: 'medium',
+  stretch: 'stretch',
+  undecided: 'undecided',
+} as const;
+
+export interface BingoSuggestion {
+  id: string;
+  playerId: string;
+  text: string;
+  intensity: BingoSuggestionIntensity;
+  weekStart: string;
+  createdAt: string;
+}
+
+export type BingoSuggestionInputIntensity = typeof BingoSuggestionInputIntensity[keyof typeof BingoSuggestionInputIntensity];
+
+
+export const BingoSuggestionInputIntensity = {
+  light: 'light',
+  medium: 'medium',
+  stretch: 'stretch',
+  undecided: 'undecided',
+} as const;
+
+export interface BingoSuggestionInput {
+  playerId: string;
+  /**
+     * @minLength 5
+     * @maxLength 180
+     */
+  text: string;
+  intensity?: BingoSuggestionInputIntensity;
+}
+
 export interface CreateRoomInput {
   /**
      * @minLength 1
