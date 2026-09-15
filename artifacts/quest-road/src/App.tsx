@@ -447,9 +447,11 @@ function HomePage() {
   const create = useCreateRoom();
   const join = useJoinRoom();
   const [mode, setMode] = useState<"create" | "join">("create");
+  const [createError, setCreateError] = useState("");
 
   const makeRoom = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setCreateError("");
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const room = String(data.get("room") ?? "").trim();
@@ -461,6 +463,9 @@ function HomePage() {
           localStorage.setItem("quest-road-room", result.id);
           localStorage.setItem("quest-road-player", result.host.id);
           setLocation(`/room/${result.id}`);
+        },
+        onError: (error) => {
+          setCreateError(error instanceof Error ? error.message : "Could not create the room.");
         },
       },
     );
@@ -544,8 +549,9 @@ function HomePage() {
                   Your name
                   <input name="name" placeholder="What should we call you?" className="mt-2 w-full rounded-xl border border-[#d9cfbd] bg-[#fbf5eb] px-4 py-3 outline-none focus:border-[#c4962b]" />
                 </label>
-                <Button type="submit" className="w-full">
-                  Create room
+                {createError && <p className="rounded-xl bg-[#fff4cc] p-3 text-sm text-[#93752c]">{createError}</p>}
+                <Button type="submit" className="w-full" disabled={create.isPending}>
+                  {create.isPending ? "Creating room" : "Create room"}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </form>
