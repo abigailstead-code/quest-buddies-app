@@ -12,7 +12,7 @@ paths = [ "/" ]
 localPort = 20223
 
 [services.development]
-run = "pnpm --filter @workspace/quest-road run dev"
+run = "sh -c 'PORT=3000 pnpm --filter @workspace/api-server run dev & pnpm --filter @workspace/quest-road run dev'"
 
 [services.production]
 build = [ "pnpm", "--filter", "@workspace/quest-road", "run", "build" ]
