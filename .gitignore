@@ -1,0 +1,73 @@
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# compiled output and local caches
+dist/
+build/
+tmp/
+temp/
+out/
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
+.cache/
+.turbo/
+.vite/
+.next/
+.nx/cache/
+coverage/
+
+# dependencies and local package stores
+node_modules/
+node_modules.broken-*/
+.pnpm-store/
+.pnpm-store-*/
+.pnpm-store.*/
+node_modules.*/
+
+# local environment secrets (keep intentional templates versioned)
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Codex and agent-local runtime state
+.codex-runtime/
+.agents/
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
+.DS_Store
+Thumbs.db
+
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
+
+# Replit
+.cache/
+.local/
