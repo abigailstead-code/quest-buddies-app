@@ -27,8 +27,12 @@ if (!basePath) {
   );
 }
 
+const workspaceRoot = path.resolve(import.meta.dirname, '..', '..');
+
 export default defineConfig({
   base: basePath,
+  // The app's local .env and Replit Secrets both feed Vite's VITE_* variables.
+  envDir: workspaceRoot,
   plugins: [
     react(),
     tailwindcss(),
