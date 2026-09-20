@@ -34,7 +34,15 @@ async function authRequest(path: string, body: Record<string, unknown>) {
     body: JSON.stringify(body),
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.message ?? data.error_description ?? "Could not sign in.");
+  if (!response.ok) {
+    const authError = data && typeof data === "object"
+      ? (data as Record<string, unknown>).message ??
+        (data as Record<string, unknown>).error_description ??
+        (data as Record<string, unknown>).msg ??
+        (data as Record<string, unknown>).error
+      : undefined;
+    throw new Error(typeof authError === "string" ? authError : `Supabase authentication failed (${response.status}).`);
+  }
   return data as { access_token?: string; refresh_token?: string; expires_in?: number; user?: Session["user"] };
 }
 
@@ -56,7 +64,10 @@ export async function signIn(email: string, password: string) {
 
 export async function signUp(email: string, password: string) {
   const data = await authRequest("signup", { email, password });
-  return storeAuthResponse(data);
+  const session = storeAuthResponse(data);
+  // With email confirmation disabled, ensure a newly created user is signed in
+  // even if Supabase returns the user without session tokens.
+  return session ?? signIn(email, password);
 }
 
 export async function getAccessToken() {

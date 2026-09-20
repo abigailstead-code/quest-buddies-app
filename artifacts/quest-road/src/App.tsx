@@ -2437,6 +2437,7 @@ function AuthGate({ children }: { children: ReactNode }) {
       <div className="mx-auto mt-16 w-full max-w-md rounded-3xl bg-[#fff7e8] p-7 text-[#24243b]">
         <p className="font-mono-ui text-xs tracking-[.2em] text-[#9a7a2b] uppercase">Quest Buddies</p>
         <h1 className="mt-2 font-display text-3xl font-bold">{mode === "sign-in" ? "Sign in" : "Create your account"}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{mode === "sign-in" ? "New here? Choose Create account below first." : "Use a new email and password to create your account."}</p>
         <form
           className="mt-6 space-y-4"
           onSubmit={async (event) => {
@@ -2460,7 +2461,7 @@ function AuthGate({ children }: { children: ReactNode }) {
           <Button type="submit" className="w-full" disabled={busy}>{busy ? "Please wait" : mode === "sign-in" ? "Sign in" : "Create account"}</Button>
         </form>
         <Button type="button" variant="ghost" className="mt-3 w-full" onClick={() => { setMode(mode === "sign-in" ? "sign-up" : "sign-in"); setError(""); }}>
-          {mode === "sign-in" ? "Create an account" : "I already have an account"}
+          {mode === "sign-in" ? "Create account" : "I already have an account - sign in"}
         </Button>
       </div>
     </main>
