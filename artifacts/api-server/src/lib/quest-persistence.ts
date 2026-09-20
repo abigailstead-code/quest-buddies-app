@@ -26,6 +26,19 @@ export async function loadQuestRoom(reference: string): Promise<StoredRoom | nul
   return row ? { roomId: row.room_id, state: row.state } : null;
 }
 
+export async function findQuestRoomForUser(userId: string): Promise<string | null> {
+  const result = await pool.query<{ room_id: string }>(
+    `select m.room_id
+       from quest_room_members m
+       join quest_room_states s on s.room_id = m.room_id
+      where m.user_id = $1
+      order by s.updated_at desc
+      limit 1`,
+    [userId],
+  );
+  return result.rows[0]?.room_id ?? null;
+}
+
 export async function createQuestRoom(state: RoomSnapshot & Record<string, unknown>) {
   const client = await pool.connect();
   try {

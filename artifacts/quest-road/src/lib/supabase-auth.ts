@@ -70,6 +70,21 @@ export async function signUp(email: string, password: string) {
   return session ?? signIn(email, password);
 }
 
+export async function findMyRoom() {
+  const token = await getAccessToken();
+  if (!token) throw new Error("Your sign-in session is no longer valid.");
+  const response = await fetch("/api/me/room", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data && typeof data === "object" ? (data as Record<string, unknown>).error : undefined;
+    throw new Error(typeof message === "string" ? message : `Could not restore your room (${response.status}).`);
+  }
+  const roomId = data && typeof data === "object" ? (data as Record<string, unknown>).roomId : null;
+  return typeof roomId === "string" ? roomId : null;
+}
+
 export async function getAccessToken() {
   const session = currentSession();
   if (!session) return null;

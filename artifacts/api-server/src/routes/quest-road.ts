@@ -33,7 +33,7 @@ import {
   CreateEncouragementResponse,
   CreateRewardResponse,
 } from "@workspace/api-zod";
-import { createQuestRoom, loadQuestRoom, saveQuestRoom } from "../lib/quest-persistence";
+import { createQuestRoom, findQuestRoomForUser, loadQuestRoom, saveQuestRoom } from "../lib/quest-persistence";
 import { requireSupabaseUser, type AuthenticatedRequest } from "../lib/supabase-auth";
 
 type Player = {
@@ -1381,6 +1381,15 @@ function parseChallengeResponseBody(input: unknown) {
 const router: IRouter = Router();
 
 router.use(requireSupabaseUser);
+
+router.get("/me/room", async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const roomId = await findQuestRoomForUser(req.authUserId!);
+    res.json({ roomId });
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.use("/rooms/:roomRef", async (req: AuthenticatedRequest, res, next) => {
   try {

@@ -72,7 +72,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import { currentSession, getAccessToken, signIn, signUp } from "@/lib/supabase-auth";
+import { currentSession, findMyRoom, getAccessToken, signIn, signUp } from "@/lib/supabase-auth";
 import "./index.css";
 
 type ExtendedRedemption = GameState["redemptions"][number] & {
@@ -442,7 +442,7 @@ function DayPicker({
   );
 }
 
-function HomePage() {
+function HomePage({ restoreError, onRetryRestore }: { restoreError?: string; onRetryRestore?: () => void }) {
   const [, setLocation] = useLocation();
   const create = useCreateRoom();
   const join = useJoinRoom();
@@ -530,6 +530,12 @@ function HomePage() {
             </div>
           </section>
           <section className="rounded-3xl bg-[#fff7e8] p-6 text-[#24243b] shadow-[0_22px_60px_rgba(9,10,28,.35)] sm:p-8">
+            {restoreError && (
+              <div className="mb-5 rounded-xl bg-[#fff4cc] p-3 text-sm text-[#93752c]">
+                <p>{restoreError}</p>
+                {onRetryRestore && <Button type="button" variant="ghost" className="mt-2" onClick={onRetryRestore}>Try again</Button>}
+              </div>
+            )}
             <div className="mb-7 flex gap-1 rounded-xl bg-[#eee5d5] p-1">
               <button onClick={() => setMode("create")} className={`flex-1 rounded-lg px-3 py-2 text-sm font-bold ${mode === "create" ? "bg-[#302f48] text-[#fff7e8]" : "text-[#797388]"}`}>
                 Start a room
@@ -2469,8 +2475,35 @@ function AuthGate({ children }: { children: ReactNode }) {
 }
 
 function RoutedApp() {
+  const [, setLocation] = useLocation();
   const roomId = localStorage.getItem("quest-road-room") ?? "";
   const shared = useGetGameState(roomId, { query: { enabled: Boolean(roomId), queryKey: getGetGameStateQueryKey(roomId), refetchInterval: 8000 } });
+  const [restoringRoom, setRestoringRoom] = useState(true);
+  const [restoreError, setRestoreError] = useState("");
+
+  const restoreRoom = async () => {
+    setRestoringRoom(true);
+    setRestoreError("");
+    try {
+      const restoredRoomId = await findMyRoom();
+      if (restoredRoomId) {
+        localStorage.setItem("quest-road-room", restoredRoomId);
+        localStorage.setItem("quest-road-player", currentSession()?.user.id ?? "");
+        setLocation(`/room/${restoredRoomId}`);
+      } else {
+        localStorage.removeItem("quest-road-room");
+        localStorage.removeItem("quest-road-player");
+      }
+    } catch (cause) {
+      setRestoreError(cause instanceof Error ? cause.message : "Could not restore your room.");
+    } finally {
+      setRestoringRoom(false);
+    }
+  };
+
+  useEffect(() => {
+    void restoreRoom();
+  }, []);
 
   const page = (element: ReactNode) => {
     if (!roomId) {
@@ -2489,7 +2522,7 @@ function RoutedApp() {
     <>
       {shared.data && <SuccessCelebrations state={shared.data} />}
       <Switch>
-        <Route path="/" component={HomePage} />
+        <Route path="/">{restoringRoom ? <Loading text="Restoring your room…" /> : <HomePage restoreError={restoreError} onRetryRestore={() => void restoreRoom()} />}</Route>
         <Route path="/room/:roomId" component={RoomPage} />
         <Route path="/invite/:roomId" component={InvitePage} />
         <Route path="/today">{page(shared.data ? <UpdatesPage state={shared.data} /> : null)}</Route>
