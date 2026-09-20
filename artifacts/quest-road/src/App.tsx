@@ -72,7 +72,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import { currentSession, findMyRoom, getAccessToken, signIn, signUp } from "@/lib/supabase-auth";
+import { currentSession, findMyRoom, getAccessToken, leaveMyRoom, signIn, signUp } from "@/lib/supabase-auth";
 import "./index.css";
 
 type ExtendedRedemption = GameState["redemptions"][number] & {
@@ -2279,6 +2279,25 @@ function TogetherPage({ state }: { state: GameState }) {
 function SettingsPage({ state }: { state: GameState }) {
   const [, setLocation] = useLocation();
   const [copied, setCopied] = useState(false);
+  const [leaveError, setLeaveError] = useState("");
+  const [leaving, setLeaving] = useState(false);
+
+  const leaveRoom = async () => {
+    if (!window.confirm("Leave this room? Your buddy and all room data will remain.")) return;
+    setLeaveError("");
+    setLeaving(true);
+    try {
+      await leaveMyRoom();
+      localStorage.removeItem("quest-road-room");
+      localStorage.removeItem("quest-road-player");
+      queryClient.clear();
+      setLocation("/");
+    } catch (cause) {
+      setLeaveError(cause instanceof Error ? cause.message : "Could not leave the room.");
+    } finally {
+      setLeaving(false);
+    }
+  };
 
   return (
     <>
@@ -2306,8 +2325,9 @@ function SettingsPage({ state }: { state: GameState }) {
           <LockKeyhole className="text-[#4e8069]" />
           Exactly two players can access this room.
         </div>
-        <Button variant="danger" className="mt-6" onClick={() => { localStorage.removeItem("quest-road-room"); localStorage.removeItem("quest-road-player"); setLocation("/"); }}>
-          Leave room
+        {leaveError && <p className="mt-5 rounded-xl bg-[#fff4cc] p-3 text-sm text-[#93752c]">{leaveError}</p>}
+        <Button variant="danger" className="mt-6" disabled={leaving} onClick={() => void leaveRoom()}>
+          {leaving ? "Leaving room…" : "Leave room"}
         </Button>
       </section>
     </>

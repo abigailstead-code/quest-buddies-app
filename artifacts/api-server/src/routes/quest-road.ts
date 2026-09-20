@@ -33,7 +33,7 @@ import {
   CreateEncouragementResponse,
   CreateRewardResponse,
 } from "@workspace/api-zod";
-import { createQuestRoom, findQuestRoomForUser, loadQuestRoom, saveQuestRoom } from "../lib/quest-persistence";
+import { addQuestRoomGuest, createQuestRoom, findQuestRoomForUser, isQuestRoomMember, leaveQuestRoomForUser, loadQuestRoom, saveQuestRoom } from "../lib/quest-persistence";
 import { requireSupabaseUser, type AuthenticatedRequest } from "../lib/supabase-auth";
 
 type Player = {
@@ -1391,6 +1391,15 @@ router.get("/me/room", async (req: AuthenticatedRequest, res, next) => {
   }
 });
 
+router.delete("/me/room", async (req: AuthenticatedRequest, res, next) => {
+  try {
+    const roomId = await leaveQuestRoomForUser(req.authUserId!);
+    res.json({ roomId });
+  } catch (error) {
+    next(error);
+  }
+});
+
 router.use("/rooms/:roomRef", async (req: AuthenticatedRequest, res, next) => {
   try {
     const roomRef = Array.isArray(req.params.roomRef) ? req.params.roomRef[0] : req.params.roomRef;
@@ -1406,7 +1415,7 @@ router.use("/rooms/:roomRef", async (req: AuthenticatedRequest, res, next) => {
     const store = stored.state as unknown as RoomStore;
     const isJoin = req.method === "POST" && req.path === "/join";
     const isInviteRead = req.method === "GET" && req.path === "/";
-    if (!isJoin && !isInviteRead && !playerIn(store.room, req.authUserId ?? "")) {
+    if (!isJoin && !isInviteRead && !await isQuestRoomMember(store.room.id, req.authUserId ?? "")) {
       res.status(403).json({ error: "This room belongs to the two invited players." });
       return;
     }
@@ -1463,7 +1472,7 @@ router.get("/rooms/:roomId", (req, res) => {
   res.json(GetRoomResponse.parse(store.room));
 });
 
-router.post("/rooms/:roomId/join", (req, res) => {
+router.post("/rooms/:roomId/join", async (req, res, next) => {
   const store = storeForRoomRef(req.params.roomId);
   if (!store) {
     res.status(404).json({ error: "Room not found" });
@@ -1484,7 +1493,12 @@ router.post("/rooms/:roomId/join", (req, res) => {
   }
   store.room.guest = makePlayer(body.playerName, playerColors[1], (req as AuthenticatedRequest).authUserId);
   store.room.status = "playing";
-  res.json(JoinRoomResponse.parse(store.room));
+  try {
+    await addQuestRoomGuest(store.room.id, store.room.guest.id, store.room.guest.color);
+    res.json(JoinRoomResponse.parse(store.room));
+  } catch (error) {
+    next(error);
+  }
 });
 
 router.get("/rooms/:roomId/state", (req, res) => {

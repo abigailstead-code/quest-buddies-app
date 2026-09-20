@@ -39,6 +39,40 @@ export async function findQuestRoomForUser(userId: string): Promise<string | nul
   return result.rows[0]?.room_id ?? null;
 }
 
+export async function isQuestRoomMember(roomId: string, userId: string): Promise<boolean> {
+  const result = await pool.query(
+    "select 1 from quest_room_members where room_id = $1 and user_id = $2 limit 1",
+    [roomId, userId],
+  );
+  return result.rowCount === 1;
+}
+
+export async function addQuestRoomGuest(roomId: string, userId: string, color: string) {
+  await pool.query(
+    `insert into quest_room_members (room_id, user_id, role, color)
+     values ($1, $2, 'guest', $3)
+     on conflict (room_id, user_id) do update set role = excluded.role, color = excluded.color`,
+    [roomId, userId, color],
+  );
+}
+
+export async function leaveQuestRoomForUser(userId: string): Promise<string | null> {
+  const result = await pool.query<{ room_id: string }>(
+    `delete from quest_room_members
+      where room_id = (
+        select room_id
+          from quest_room_members
+         where user_id = $1
+         order by joined_at desc
+         limit 1
+      )
+        and user_id = $1
+      returning room_id`,
+    [userId],
+  );
+  return result.rows[0]?.room_id ?? null;
+}
+
 export async function createQuestRoom(state: RoomSnapshot & Record<string, unknown>) {
   const client = await pool.connect();
   try {
@@ -76,6 +110,11 @@ export async function saveQuestRoom(state: RoomSnapshot & Record<string, unknown
       "update quest_rooms set name = $2, status = $3, updated_at = now() where id = $1",
       [state.room.id, state.room.name, state.room.status],
     );
+    const members = await client.query<{ user_id: string }>(
+      "select user_id from quest_room_members where room_id = $1",
+      [state.room.id],
+    );
+    const memberIds = new Set(members.rows.map((member) => member.user_id));
     for (const [role, player] of [["host", state.room.host], ["guest", state.room.guest]] as const) {
       if (!player) continue;
       await client.query(
@@ -84,12 +123,12 @@ export async function saveQuestRoom(state: RoomSnapshot & Record<string, unknown
          on conflict (id) do update set display_name = excluded.display_name, avatar = excluded.avatar, updated_at = now()`,
         [player.id, player.name, player.avatar],
       );
-      await client.query(
-        `insert into quest_room_members (room_id, user_id, role, color)
-         values ($1, $2, $3, $4)
-         on conflict (room_id, user_id) do update set role = excluded.role, color = excluded.color`,
-        [state.room.id, player.id, role, player.color],
-      );
+      if (memberIds.has(player.id)) {
+        await client.query(
+          "update quest_room_members set role = $3, color = $4 where room_id = $1 and user_id = $2",
+          [state.room.id, player.id, role, player.color],
+        );
+      }
     }
     await client.query(
       "update quest_room_states set state = $2::jsonb, updated_at = now() where room_id = $1",

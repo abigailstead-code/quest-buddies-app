@@ -85,6 +85,20 @@ export async function findMyRoom() {
   return typeof roomId === "string" ? roomId : null;
 }
 
+export async function leaveMyRoom() {
+  const token = await getAccessToken();
+  if (!token) throw new Error("Your sign-in session is no longer valid.");
+  const response = await fetch("/api/me/room", {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = data && typeof data === "object" ? (data as Record<string, unknown>).error : undefined;
+    throw new Error(typeof message === "string" ? message : `Could not leave the room (${response.status}).`);
+  }
+}
+
 export async function getAccessToken() {
   const session = currentSession();
   if (!session) return null;
